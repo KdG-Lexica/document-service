@@ -1,6 +1,6 @@
 # document-service
 
-Python backend for web-client.
+Node backend for web-client.
 
 ## Getting started
 
