@@ -6,5 +6,6 @@ import { Mongoose } from 'mongoose';
 const ArticleRouter: Router = Router({ mergeParams: true });
 
 ArticleRouter.get("/", ArticleController.getFirstArticles);
+ArticleRouter.get("/:id", ArticleController.getArticleById);
 
 export default ArticleRouter

@@ -8,13 +8,10 @@
   "rules": {
     "prettier/prettier": [
       "error"
+    ],
+    "quotes": [
+      2,
+      "single"
     ]
-  },
-  "quotes": [
-    "warn",
-    "single",
-    {
-      "avoidEscape": true
-    }
-  ]
+  }
 }

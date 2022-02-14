@@ -71,8 +71,10 @@ const articleSchema = new mongoose.Schema({
     word_count: Number,
     score: Number,
     uri: String,
-    text: String
+    text: String,
+    '3d': [String],
+    '768d': [String]
 });
 
-const Article = mongoose.model("articles", articleSchema);
+const Article = mongoose.model('embeddings', articleSchema);
 export default Article;
