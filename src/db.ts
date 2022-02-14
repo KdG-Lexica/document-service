@@ -5,7 +5,7 @@ import { createClient } from 'redis'
 
 export const applyMongooseCache = async () => {
 
-  const client = createClient()
+  const client = process.env.enviroment === 'prod' ? createClient({ url: 'redis://redis'})  :createClient()
   await client.connect()
   const exec = mongoose.Query.prototype.exec
 
