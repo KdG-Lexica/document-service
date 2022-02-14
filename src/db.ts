@@ -6,7 +6,7 @@ import { createClient } from 'redis'
 
 export const applyMongooseCache = async () => {
   if (IS_PRODUCTION) {
-    const client = createClient()
+    const client = createClient({url: 'redis://redis:6379'})
     await client.connect()
     const exec = mongoose.Query.prototype.exec
 
