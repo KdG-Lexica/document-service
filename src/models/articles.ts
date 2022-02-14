@@ -55,7 +55,7 @@ const bylineSchema = new mongoose.Schema({
 });
 
 const articleSchema = new mongoose.Schema({
-    _id: mongoose.Types.ObjectId,
+    _id: String,
     web_url: String,
     snippet: String,
     print_page: Number,
