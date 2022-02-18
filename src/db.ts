@@ -39,7 +39,9 @@ export const applyMongooseCache = async () => {
 
 }
 
-const connection = mongoose.connect(MONGODB_URL, { dbName: "nyt", user: "root", pass: "example" });
+const connectDatabase = mongoose.connect(MONGODB_URL, { dbName: "nyt", user: "root", pass: "example" });
 
-export default connection;
+export {
+  connectDatabase
+};
 /* export const db = mongoose.connection; */

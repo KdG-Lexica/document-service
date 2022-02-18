@@ -18,7 +18,7 @@ export const createModel = async (req: Request, res: Response, next: NextFunctio
 
 export const getModel = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { model } = req.body;
+    const { model } = req.params;
 
     const result = await ModelService.getModel(model);
 

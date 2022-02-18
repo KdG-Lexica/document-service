@@ -9,6 +9,7 @@ export const createModel = (collectionName: string, mappings: any, meta: string[
 }
 
 export const getModel = (modelId: string) => {
+  console.log(modelId);
   return Model.findById(modelId).exec();
 }
 

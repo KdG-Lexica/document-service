@@ -4,7 +4,7 @@ import * as cors from 'cors';
 import { HandleError } from './controllers/ErrorController';
 import { HttpException } from './exceptions/HttpException';
 import 'dotenv/config'
-import db, { applyMongooseCache } from './db';
+import { connectDatabase ,applyMongooseCache } from './db';
 
 const app = express();
 const PORT = process.env.PORT as unknown as number || 3000;
@@ -32,7 +32,7 @@ app.use((error: HttpException, req: Request, res: Response, next: NextFunction) 
 });
 
 applyMongooseCache().then(() => {
-  db.then(() => {
+  connectDatabase.then(() => {
     app.listen(PORT, () => {
       console.log(`API running on port ${PORT}!`);
     });

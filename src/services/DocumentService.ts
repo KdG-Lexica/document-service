@@ -1,23 +1,26 @@
 import mongoose, { Schema } from 'mongoose';
 import Model from '../models/model';
 
-export const getDocuments = async (modelId: string): Promise<any[]> => {
-  const res = await Model.find().limit(1).exec();
-
-  const model = res[0];
-
-
-
+const ensureCollection = (collectionName: string) => {
   let collection: any;
   try {
-    const schema = new Schema({}, { strict: false})
-    collection = mongoose.model(model.collectionName, schema);
+    const schema = new Schema({}, { strict: false })
+    collection = mongoose.model(collectionName, schema);
   } catch (error) {
-    collection = mongoose.model(model.collectionName)
+    collection = mongoose.model(collectionName)
   }
 
+  return collection;
+}
 
-  const result = await collection.find().limit(10).exec();
+export const getDocuments = async (modelId: string, limit = 1000, offset = 0, dateFilter = '2018-08-01T00:00:03+0000'): Promise<any[]> => {
+  const model = await Model.findById(modelId).exec();
+
+  const collection = ensureCollection(model.collectionName);
+
+  const result = await collection.find({
+    [model.mappings.date]: { $regex: dateFilter }
+  }).skip(offset).limit(limit).exec();
 
   const arr: Document[] = result.map((e: any) => {
     return {
@@ -32,4 +35,14 @@ export const getDocuments = async (modelId: string): Promise<any[]> => {
     } as unknown as Document;
   })
   return arr;
+}
+
+export const getDocument = async (model: string, documentId: string) => {
+
+  const res = await Model.find().limit(1).exec();
+
+  const m = res[0];
+
+  const collection = ensureCollection(m.collectionName);
+  return collection.findById(documentId).exec();
 }
