@@ -21,10 +21,8 @@ app.get('/api/health', (req: Request, res: Response) => {
 })
 
 import ModelRouter from './routes/ModelRouter';
-import DocumentRouter from './routes/DocumentRouter';
 
 app.use('/models', ModelRouter);
-app.use('/documents', DocumentRouter);
 
 app.use((req: Request, res: Response, next: NextFunction) => next(new HttpException(404, "not-found")));
 app.use((error: HttpException, req: Request, res: Response, next: NextFunction) => {

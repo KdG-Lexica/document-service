@@ -35,12 +35,13 @@ export const getDocuments = async (modelId: string, limit = 1000, offset = 0, da
   return arr;
 }
 
-export const getDocument = async (model: string, documentId: string) => {
+export const getDocument = async (modelId: string, documentId: string) => {
 
-  const res = await Model.find().limit(1).exec();
+  const model = await Model.findById(modelId).exec();
 
-  const m = res[0];
+  const collection = ensureCollection(model.collectionName);
 
-  const collection = ensureCollection(m.collectionName);
-  return collection.findById(documentId).exec();
+  const document = await collection.findById(documentId).exec();
+
+  return document;
 }

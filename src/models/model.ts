@@ -1,5 +1,17 @@
 import mongoose from 'mongoose';
 
+export interface ModelProperties {
+  _id: string,
+  collectionName: string,
+  meta: string[],
+  mappings: {
+    id: string,
+    name: string,
+    date: string,
+    vector3: string,
+  }
+}
+
 const modelSchema = new mongoose.Schema({
   collectionName: String,
   meta: [],
