@@ -18,9 +18,7 @@ export const getDocuments = async (modelId: string, limit = 1000, offset = 0, da
 
   const collection = ensureCollection(model.collectionName);
 
-  const result = await collection.find({
-    [model.mappings.date]: { $regex: dateFilter }
-  }).skip(offset).limit(limit).exec();
+  const result = await collection.find().skip(offset).limit(limit).exec();
 
   const arr: Document[] = result.map((e: any) => {
     return {
