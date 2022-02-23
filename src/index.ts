@@ -6,6 +6,9 @@ import { HttpException } from './exceptions/HttpException';
 import 'dotenv/config'
 import { connectDatabase ,applyMongooseCache } from './db';
 
+
+import { createClient } from 'redis'
+
 const app = express();
 const PORT = process.env.PORT as unknown as number || 3000;
 
@@ -23,6 +26,16 @@ app.get('/api/health', (req: Request, res: Response) => {
 import ModelRouter from './routes/ModelRouter';
 
 app.use('/models', ModelRouter);
+
+if(process.env.enviroment === 'prod'){
+  app.post('/clear-cache', async  (req,res,next) => {
+    const client = createClient({url: 'redis://redis:6379'})
+    await client.connect()
+    await client.flushDb();
+    return res.end()
+  })
+}
+
 
 app.use((req: Request, res: Response, next: NextFunction) => next(new HttpException(404, "not-found")));
 app.use((error: HttpException, req: Request, res: Response, next: NextFunction) => {

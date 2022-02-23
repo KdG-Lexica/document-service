@@ -38,7 +38,7 @@ export const applyMongooseCache = async () => {
   }
 
 }
-
+mongoose.set('debug', true);
 const connectDatabase = mongoose.connect(MONGODB_URL, { dbName: "nyt", user: "root", pass: "example" });
 
 export {

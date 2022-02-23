@@ -1,9 +1,14 @@
 import mongoose from 'mongoose';
 
+export interface MetaProperty {
+  value: string,
+  type: string
+}
+
 export interface ModelProperties {
   _id: string,
   collectionName: string,
-  meta: string[],
+  meta: MetaProperty[],
   mappings: {
     id: string,
     name: string,

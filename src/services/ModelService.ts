@@ -8,9 +8,10 @@ export const createModel = (collectionName: string, mappings: any, meta: string[
   })
 }
 
-export const getModel = (modelId: string) => {
-  console.log(modelId);
-  return Model.findById(modelId).exec();
+export const getModel = async (modelId: string): Promise<ModelProperties> => {
+  const m = await Model.findById(modelId).exec();
+
+  return m;
 }
 
 export const getModels = () => {

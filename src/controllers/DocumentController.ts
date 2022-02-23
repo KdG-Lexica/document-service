@@ -8,7 +8,10 @@ export const getDocuments = async (req: Request, res: Response, next: NextFuncti
     const { model } = req.params;
     const { limit, offset } = req.query;
 
-    const result = await DocumentService.getDocuments(model , +limit, +offset);
+    const { filter } = req.body;
+    console.log(filter);
+
+    const result = await DocumentService.getDocuments(model, filter, +limit, +offset);
     return res.json(result)
   } catch (error) {
     return next(new HttpException(500, error));
