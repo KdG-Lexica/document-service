@@ -1,17 +1,17 @@
 import { Request, Response, NextFunction } from "express";
-import { ModelProperties } from "../models/model";
+import VectorModel from "../models/VectorModel";
 import { HttpException } from "../exceptions/HttpException";
 
 import * as ModelService from '../services/ModelService';
+import * as IndexTaskService from '../services/IndexTaskService';
 
 export const createModel = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { collectionName, meta, mappings } = req.body;
 
+    const indexTask = await ModelService.initModel(collectionName, mappings, meta);
 
-    await ModelService.createModel(collectionName, mappings, meta);
-
-    return res.end();
+    return res.json(indexTask);
   } catch (error) {
     return next(new HttpException(500, error))
   }
@@ -47,7 +47,7 @@ export const updateModel = async (req: Request, res: Response, next: NextFunctio
     await ModelService.updateModel({
       _id: modelId,
       ...model
-    } as Partial<ModelProperties>)
+    } as Partial<VectorModel>)
     return res.end();
   } catch (error) {
     return next(new HttpException(500, error))
@@ -59,6 +59,16 @@ export const deleteModel = async (req: Request, res: Response, next: NextFunctio
     const { model } = req.params;
     await ModelService.deleteModel(model)
     return res.end();
+  } catch (error) {
+    return next(new HttpException(500, error))
+  }
+}
+
+export const getIndexTask = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { taskId } = req.params;
+    const task = await IndexTaskService.getIndexTast(+taskId);
+    return res.json(task);
   } catch (error) {
     return next(new HttpException(500, error))
   }

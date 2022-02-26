@@ -4,8 +4,8 @@ import * as cors from 'cors';
 import { HandleError } from './controllers/ErrorController';
 import { HttpException } from './exceptions/HttpException';
 import 'dotenv/config'
-import { connectDatabase ,applyMongooseCache } from './db';
 
+import { connectMongo, db } from './db';
 
 import { createClient } from 'redis'
 
@@ -42,12 +42,13 @@ app.use((error: HttpException, req: Request, res: Response, next: NextFunction) 
   HandleError(error, req, res, next)
 });
 
-applyMongooseCache().then(() => {
-  connectDatabase.then(() => {
-    app.listen(PORT, () => {
-      console.log(`API running on port ${PORT}!`);
-    });
-  })
-})
+
+(async () => {
+  await connectMongo();
+  await db.sync({force: false});
+  app.listen(PORT, () => {
+    console.log(`API running on port ${PORT}!`);
+  });
+})();
 
 

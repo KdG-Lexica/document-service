@@ -21,4 +21,4 @@ RUN npm run build
 
 EXPOSE 8080
 
-CMD [ "node", "./dist/index.js" ]
+CMD exec node --max_old_space_size=16192 "./dist/index.js" 

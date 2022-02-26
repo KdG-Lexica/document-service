@@ -7,12 +7,12 @@ import DocumentRouter from './DocumentRouter'
 
 ModelRouter.post('/', ModelController.createModel);
 ModelRouter.get('/', ModelController.getModels)
+ModelRouter.get('/task/:taskId', ModelController.getIndexTask);
 ModelRouter.patch('/:modelId', ModelController.updateModel);
 ModelRouter.delete('/:modelId', ModelController.deleteModel);
 
 
 ModelRouter.use('/:model/documents', DocumentRouter);
-
 ModelRouter.get('/:model', ModelController.getModel)
 
 

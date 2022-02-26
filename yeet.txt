@@ -1,0 +1,89 @@
+const model = await Model.findById(modelId).exec();
+
+  const collection = ensureCollection(model.collectionName);
+
+  let query = collection;
+
+  const filterObj: Record<string, any> = {};
+  const orQueries: Filter[] = [];
+  const andQueries: Filter[] = [];
+
+
+  filters.forEach((filterItem, index) => {
+    // this is a joining item
+    if (filterItem.rules == null) {
+      const prev = filters[index - 1];
+      const next = filters[index + 1];
+
+      if (filterItem.combinator === 'AND') {
+        andQueries.push(prev, next);
+      } else {
+        orQueries.push(prev, next);
+      }
+    }
+  })
+
+  andQueries.forEach(q => {
+    if (!Object.keys(filterObj).includes('$and')) Object.assign(filterObj, { '$and': [] })
+    if (q.rules.length === 1) {
+      filterObj.$and.push({
+        [q.rules[0].field]: {
+          $regex: generateRegex(q.rules[0])
+        }
+      })
+    } else {
+      const obj = {
+        [`$${q.combinator.toLowerCase()}`]: q.rules.map(e => {
+          return {
+            [e.field]: {
+              $regex: generateRegex(e)
+            }
+          }
+        })
+      }
+
+      filterObj.$and.push(obj)
+    }
+
+  })
+
+  orQueries.forEach(q => {
+    if (!Object.keys(filterObj).includes('$or')) Object.assign(filterObj, { '$or': [] })
+    if (q.rules.length === 1) {
+      filterObj.$or.push({
+        [q.rules[0].field]: {
+          $regex: generateRegex(q.rules[0])
+        }
+      })
+
+    } else {
+      const obj = {
+        [`$${q.combinator.toLowerCase()}`]: q.rules.map(e => {
+          return {
+            [e.field]: {
+              $regex: generateRegex(e)
+            }
+          }
+        })
+      }
+
+      filterObj.$or.push(obj)
+    }
+  })
+
+  query = query.find(filterObj);
+  query = query.skip(offset).limit(limit);
+  const result = await query.exec()
+
+  const arr: Document[] = result.filter(() => Math.random() > skipFactor).map((e: any) => {
+    return {
+      id: e[model.mappings.id],
+      name: model.mappings.name.split('.').reduce((a: any, b: any) => a[b], e),
+      date: e[model.mappings.date],
+      vector3: {
+        x: e[model.mappings.vector3][0],
+        y: e[model.mappings.vector3][1],
+        z: e[model.mappings.vector3][2],
+      }
+    } as unknown as DocumentType;
+  })
