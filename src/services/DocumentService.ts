@@ -12,7 +12,9 @@ import { Model, ModelStatic, QueryTypes } from 'sequelize';
 const ensureCollection = (collectionName: string) => {
   let collection: any;
   try {
-    const schema = new Schema({}, { strict: false, _id: false })
+    const schema = new Schema({
+      _id: String
+    }, { strict: false, _id: false })
     collection = mongoose.model(collectionName, schema);
   } catch (error) {
     collection = mongoose.model(collectionName)
@@ -54,7 +56,7 @@ const generateSelectQuery = (filters: Filter[], tableName: string, limit: number
   }
 }
 
-export const getDocuments = async (modelId: string, filters: Filter[], limit = 1000, offset = 0): Promise<any> => {
+export const getDocuments = async (modelId: number, filters: Filter[], limit = 1000, offset = 0): Promise<any> => {
   const model = await ModelServices.getModel(modelId);
 
   const { query, replacements } = generateSelectQuery(filters, model.collectionName, limit, offset);
@@ -84,10 +86,11 @@ export const getDocuments = async (modelId: string, filters: Filter[], limit = 1
   }
 }
 
-export const getDocument = async (modelId: string, documentId: string) => {
+export const getDocument = async (modelId: number, documentId: string) => {
 
   const model = await ModelServices.getModel(modelId);
-  const mongoCollection = ensureCollection(model.collectionName);
+  const mongoCollection = ensureCollection(model.collectionName.split('_')[0]);
+  console.log(mongoCollection);
 
   const document = await mongoCollection.findOne({ _id: documentId }).exec();
 
@@ -110,33 +113,28 @@ export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelSt
     }, obj);
   }
 
-  for (let x = 0; x <= indexTask.recordCount; x += 100) {
-    const documents = (await mongoCollection.find({}).skip(x*100).limit(100).exec());
+  for (let x = 0; x <= indexTask.recordCount; x++) {
+    const document = (await mongoCollection.find({}).skip(x).limit(1).exec())[0];
 
-    const arr: any[] = [];
+    const obj = {
+      id: document[mappings.find(e => e.key === 'id').value],
+      name: getDescendantProp(document, mappings.find(e => e.key === 'name').value),
+      date: document[mappings.find(e => e.key === 'date').value],
+      ['vector$x']: document[mappings.find(e => e.key === 'vector3').value][0],
+      ['vector$y']: document[mappings.find(e => e.key === 'vector3').value][1],
+      ['vector$z']: document[mappings.find(e => e.key === 'vector3').value][2],
+    }
 
-    documents.forEach((document: any) => {
-      const obj = {
-        id: document[mappings.find(e => e.key === 'id').value],
-        name: getDescendantProp(document, mappings.find(e => e.key === 'name').value),
-        date: document[mappings.find(e => e.key === 'date').value],
-        ['vector$x']: document[mappings.find(e => e.key === 'vector3').value][0],
-        ['vector$y']: document[mappings.find(e => e.key === 'vector3').value][1],
-        ['vector$z']: document[mappings.find(e => e.key === 'vector3').value][2],
-      }
-
-      meta.forEach((metaItem) => {
-        Object.assign(obj, {
-          [`meta$${metaItem.key}`]: document[metaItem.key]
-        })
+    meta.forEach((metaItem) => {
+      Object.assign(obj, {
+        [`meta$${metaItem.key}`]: document[metaItem.key]
       })
-
-      arr.push(obj);
     })
 
+    console.log(`#${x} - ${document._d}`);
 
-    await sqlModel.bulkCreate(arr)
-    if (x % 100 === 0) console.log(`${x} records`)
-    if (x % 1000 === 0) await indexTask.update({ recordsInserted: x });
+    await sqlModel.create(obj)
+
+    if (x % 100 === 0) await indexTask.update({ recordsInserted: x });
   }
 }

@@ -84,7 +84,7 @@ export const initModel = async (collectionName: string, mappings: Record<string,
   return indexTask;
 }
 
-export const getModel = async (modelId: string): Promise<VectorModel> => {
+export const getModel = async (modelId: number): Promise<VectorModel> => {
   return VectorModel.findByPk(modelId, {
     include: [
       {

@@ -11,7 +11,7 @@ export const getDocuments = async (req: Request, res: Response, next: NextFuncti
     const { filter } = req.body;
     console.log(filter);
 
-    const result = await DocumentService.getDocuments(model, filter, +limit, +offset);
+    const result = await DocumentService.getDocuments(+model, filter, +limit, +offset);
     return res.json(result)
   } catch (error) {
     return next(new HttpException(500, error));
@@ -21,8 +21,8 @@ export const getDocuments = async (req: Request, res: Response, next: NextFuncti
 export const getDocument = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { model, document } = req.params;
-    console.log(req.params)
-    const result = await DocumentService.getDocument(model, document);
+
+    const result = await DocumentService.getDocument(+model, document);
 
     return res.json(result)
   } catch (error) {

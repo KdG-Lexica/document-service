@@ -21,7 +21,7 @@ export const getModel = async (req: Request, res: Response, next: NextFunction) 
   try {
     const { model } = req.params;
 
-    const result = await ModelService.getModel(model);
+    const result = await ModelService.getModel(+model);
 
     return res.json(result);
 
