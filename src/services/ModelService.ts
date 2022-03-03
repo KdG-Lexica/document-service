@@ -19,6 +19,7 @@ const generateColumns = (meta: VectorModelMeta[]): any => {
     ['vector$x']: { type: DataTypes.DOUBLE },
     ['vector$y']: { type: DataTypes.DOUBLE },
     ['vector$z']: { type: DataTypes.DOUBLE },
+    cosineArray: { type: DataTypes.TEXT },
   }
 
   meta.forEach(metaItem => {
@@ -44,11 +45,12 @@ const createSqlModel = async (model: VectorModel): Promise<ModelStatic<Model<any
   return sqlModel;
 }
 
-export const initModel = async (collectionName: string, mappings: Record<string, string>, meta: VectorModelMetaAttributes[]): Promise<IndexTask> => {
+export const initModel = async (collectionName: string, cosineArray: string, mappings: Record<string, string>, meta: VectorModelMetaAttributes[]): Promise<IndexTask> => {
 
   const name = `${collectionName}_${(Math.random() + 1).toString(36).substring(7)}`
   const vectorModel = await VectorModel.create({
     collectionName: name,
+    cosineArray,
   })
 
 
@@ -67,7 +69,7 @@ export const initModel = async (collectionName: string, mappings: Record<string,
     })
   }
 
-  const collectionCount = 890000 // await DocumentService.countCollection(vectorModel.collectionName);
+  const collectionCount = await DocumentService.countCollection(vectorModel.collectionName.split('_')[0]);
   console.log(`Collection count: ${collectionCount}`)
   const indexTask = await IndexTaskService.createIndexTask({
     VectorModelId: vectorModel.id,
@@ -76,9 +78,7 @@ export const initModel = async (collectionName: string, mappings: Record<string,
     recordsInserted: 0
   })
 
-  console.log('before create sql')
   const sqlModel = await createSqlModel(vectorModel);
-  console.log('after create sql')
   DocumentService.syncModelToSql(vectorModel, sqlModel, indexTask);
 
   return indexTask;
