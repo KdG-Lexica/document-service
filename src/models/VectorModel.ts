@@ -8,12 +8,14 @@ import VectorModelMapping from './VectorModelMapping';
 export interface VectorModelAttributes {
   id: number,
   collectionName: string,
+  cosineArray: string,
 }
 
 
 class VectorModel extends Model<VectorModelAttributes> implements VectorModelAttributes {
   public id: number;
   public collectionName: string;
+  declare cosineArray: string;
 
   public static associations: {
     meta: Association<VectorModel, VectorModelMeta>;
@@ -38,6 +40,9 @@ VectorModel.init({
   },
   collectionName: {
     type: DataTypes.STRING,
+  },
+  cosineArray: {
+    type: DataTypes.STRING
   }
 }, {
     sequelize: db
