@@ -7,11 +7,11 @@ import * as CosineService from '../services/CosineService';
 
 export const GetCosineCloseDocuments = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { model, document } = req.params;
+    const { model } = req.params;
 
-    const { rangeFactor } = req.query;
+    const { rangeFactor, document } = req.query;
 
-    const data = await CosineService.GetCosineCloseDocuments(+model, document, +rangeFactor);
+    const data = await CosineService.GetCosineCloseDocuments(+model, document as string, +rangeFactor);
 
     return res.json(data);
   } catch (error) {

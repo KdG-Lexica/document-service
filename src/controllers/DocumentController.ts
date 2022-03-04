@@ -20,9 +20,11 @@ export const getDocuments = async (req: Request, res: Response, next: NextFuncti
 
 export const getDocument = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { model, document } = req.params;
+    const { model } = req.params;
 
-    const result = await DocumentService.getDocument(+model, document);
+    const { document } = req.query
+
+    const result = await DocumentService.getDocument(+model, document as string);
 
     return res.json(result)
   } catch (error) {

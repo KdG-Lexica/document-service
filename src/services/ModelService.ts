@@ -69,7 +69,7 @@ export const initModel = async (collectionName: string, cosineArray: string, map
     })
   }
 
-  const collectionCount = await DocumentService.countCollection(vectorModel.collectionName.split('_')[0]);
+  const collectionCount = 890000 // await DocumentService.countCollection(vectorModel.collectionName.split('_')[0]);
   console.log(`Collection count: ${collectionCount}`)
   const indexTask = await IndexTaskService.createIndexTask({
     VectorModelId: vectorModel.id,

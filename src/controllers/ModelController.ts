@@ -67,8 +67,17 @@ export const deleteModel = async (req: Request, res: Response, next: NextFunctio
 export const getIndexTask = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { taskId } = req.params;
-    const task = await IndexTaskService.getIndexTast(+taskId);
+    const task = await IndexTaskService.getIndexTask(+taskId);
     return res.json(task);
+  } catch (error) {
+    return next(new HttpException(500, error))
+  }
+}
+
+export const getIndexTasks =  async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tasks = await IndexTaskService.getIndexTasks();
+    return res.json(tasks);
   } catch (error) {
     return next(new HttpException(500, error))
   }

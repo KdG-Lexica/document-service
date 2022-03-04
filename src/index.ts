@@ -33,7 +33,7 @@ app.use((error: HttpException, req: Request, res: Response, next: NextFunction) 
 
 (async () => {
   await connectMongo();
-  await db.sync({force: true});
+  await db.sync({force: false});
   app.listen(PORT, () => {
     console.log(`API running on port ${PORT}!`);
   });

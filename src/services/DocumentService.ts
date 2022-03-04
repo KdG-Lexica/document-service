@@ -17,7 +17,7 @@ const ensureCollection = (collectionName: string) => {
     }, { strict: false, _id: false })
     collection = mongoose.model(collectionName, schema);
   } catch (error) {
-    collection = mongoose.model(collectionName)
+    collection = mongoose.model(collectionName);
   }
 
   return collection;
@@ -113,40 +113,37 @@ export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelSt
   }
 
 
-  for (let x = 0; x <= indexTask.recordCount; x += 100) {
-    const documents = await mongoCollection.find({}).skip(x * 100).limit(100).exec();
-    let arr: any[] = [];
-    let i = 0;
+  let arr: any[] = [];
+  let x = 0;
+  mongoCollection.find().cursor().eachAsync(async (document: any) => {
+    if (!document) return;
+    const obj = {
+      id: document[mappings.find(e => e.key === 'id').value],
+      name: getDescendantProp(document, mappings.find(e => e.key === 'name').value),
+      date: document[mappings.find(e => e.key === 'date').value],
+      ['vector$x']: document[mappings.find(e => e.key === 'vector3').value][0],
+      ['vector$y']: document[mappings.find(e => e.key === 'vector3').value][1],
+      ['vector$z']: document[mappings.find(e => e.key === 'vector3').value][2],
+      cosineArray: document[vectorModel.cosineArray].join(',')
+    }
 
-    while (i < 100) {
-      const document = documents[i];
-      const obj = {
-        id: document[mappings.find(e => e.key === 'id').value],
-        name: getDescendantProp(document, mappings.find(e => e.key === 'name').value),
-        date: document[mappings.find(e => e.key === 'date').value],
-        ['vector$x']: document[mappings.find(e => e.key === 'vector3').value][0],
-        ['vector$y']: document[mappings.find(e => e.key === 'vector3').value][1],
-        ['vector$z']: document[mappings.find(e => e.key === 'vector3').value][2],
-        cosineArray: document[vectorModel.cosineArray].join(',')
-      }
-
-      meta.forEach((metaItem) => {
-        Object.assign(obj, {
-          [`meta$${metaItem.key}`]: document[metaItem.key]
-        })
+    meta.forEach((metaItem) => {
+      Object.assign(obj, {
+        [`meta$${metaItem.key}`]: document[metaItem.key]
       })
-      arr.push(obj)
-      i++;
-    }
-    
-    await sqlModel.bulkCreate(arr);
+    })
 
-    arr = [];
-
-    if (x % 100 === 0) {
+    arr.push(obj)
+    if (arr.length === 1000) {
+      await sqlModel.bulkCreate(arr);
+      x += 1000
       await indexTask.update({ recordsInserted: x });
+      arr = [];
+      if(x === indexTask.recordCount){
+        await db.query(`CREATE INDEX vector_index ON ${vectorModel.collectionName} (vector$x, vector$y, vector$z)`);
+      }
     }
-  }
+  })
 }
 
 export const getCloseDocuments = (document: any, rangeFactor: number) => {

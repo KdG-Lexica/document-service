@@ -7,8 +7,8 @@ import CosineRouter from './CosineRouter';
 const DocumentRouter: Router = Router({ mergeParams: true });
 
 
-DocumentRouter.use('/:document/cosine', CosineRouter);
-DocumentRouter.get('/:document', DocumentController.getDocument)
+DocumentRouter.use('/cosine', CosineRouter);
+DocumentRouter.get('/', DocumentController.getDocument)
 DocumentRouter.post('/', DocumentController.getDocuments)
 
 export default DocumentRouter

@@ -34,7 +34,7 @@ VectorModel.hasOne(IndexTask);
 // MONGO SETUP
 const MONGODB_URL = process.env.MONGODB_URL;
 const connectMongo = () => { return mongoose.connect(MONGODB_URL, { dbName: "nyt", user: "root", pass: "example" }) }
-
+mongoose.set('debug', { shell: true })
 export {
   connectMongo,
   db,
