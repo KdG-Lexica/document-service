@@ -7,9 +7,9 @@ import * as IndexTaskService from '../services/IndexTaskService';
 
 export const createModel = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { collectionName, cosineArray, meta, mappings } = req.body;
+    const { collectionName, cosineArray, meta, mappings, description, dateField } = req.body;
 
-    const indexTask = await ModelService.initModel(collectionName, cosineArray, mappings, meta);
+    const indexTask = await ModelService.initModel(collectionName, cosineArray, mappings, meta, description, dateField);
 
     return res.json(indexTask);
   } catch (error) {

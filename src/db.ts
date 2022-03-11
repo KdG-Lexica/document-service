@@ -15,6 +15,10 @@ let queryCount = 0;
 const db = new Sequelize(config.database, config.user, config.password, {
   host: config.host,
   dialect: 'mysql',
+  define: {
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_general_ci'
+  },
   logging: (msg) => {
     queryCount++;
   },

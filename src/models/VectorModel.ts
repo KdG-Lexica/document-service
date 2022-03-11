@@ -9,6 +9,9 @@ export interface VectorModelAttributes {
   id: number,
   collectionName: string,
   cosineArray: string,
+  description: string,
+  documentCount: number,
+  dateField: string,
 }
 
 
@@ -16,6 +19,9 @@ class VectorModel extends Model<VectorModelAttributes> implements VectorModelAtt
   public id: number;
   public collectionName: string;
   declare cosineArray: string;
+  declare description: string;
+  declare documentCount: number;
+  declare dateField: string;
 
   public static associations: {
     meta: Association<VectorModel, VectorModelMeta>;
@@ -42,6 +48,15 @@ VectorModel.init({
     type: DataTypes.STRING,
   },
   cosineArray: {
+    type: DataTypes.STRING
+  },
+  description: {
+    type: DataTypes.STRING
+  },
+  documentCount: {
+    type: DataTypes.INTEGER,
+  },
+  dateField: {
     type: DataTypes.STRING
   }
 }, {

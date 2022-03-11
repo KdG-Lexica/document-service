@@ -29,7 +29,7 @@ const cosinesim = (A: number[], B: number[]) => {
 }
 
 const generateQuery = (collectionName: string, rangeFactor: number, modelVector: Vector3Type): string => {
-  return `SELECT id, name, date, vector$x, vector$y, vector$z, cosineArray FROM ${collectionName} WHERE (vector$y > ${modelVector.y - rangeFactor / 2} AND vector$y < ${modelVector.y + rangeFactor / 2}) AND (vector$z > ${modelVector.z - rangeFactor / 2} AND vector$z < ${modelVector.z + rangeFactor / 2}) AND (vector$x > ${modelVector.x - rangeFactor / 2} AND vector$x < ${modelVector.x + rangeFactor / 2});`
+  return `SELECT id, name, vector$x, vector$y, vector$z, cosineArray FROM ${collectionName} WHERE (vector$y > ${modelVector.y - rangeFactor / 2} AND vector$y < ${modelVector.y + rangeFactor / 2}) AND (vector$z > ${modelVector.z - rangeFactor / 2} AND vector$z < ${modelVector.z + rangeFactor / 2}) AND (vector$x > ${modelVector.x - rangeFactor / 2} AND vector$x < ${modelVector.x + rangeFactor / 2});`
 }
 
 export const GetCosineCloseDocuments = async (modelId: number, documentId: string, rangeFactor: number) => {

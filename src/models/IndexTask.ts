@@ -8,7 +8,6 @@ export interface IndexTaskAttributes {
   VectorModelId: number,
   recordCount: number,
   recordsInserted: number,
-  estimatedComplete: Date
 }
 
 class IndexTask extends Model<IndexTaskAttributes> implements IndexTaskAttributes {
@@ -16,7 +15,8 @@ class IndexTask extends Model<IndexTaskAttributes> implements IndexTaskAttribute
   declare VectorModelId: number;
   declare recordCount: number;
   declare recordsInserted: number;
-  declare estimatedComplete: Date;
+  declare documentCount: number;
+  declare description: string;
 }
 
 IndexTask.init({
@@ -34,9 +34,6 @@ IndexTask.init({
   recordsInserted: {
     type: DataTypes.INTEGER,
   },
-  estimatedComplete: {
-    type: DataTypes.DATE,
-  }
 }, {
   sequelize: db,
 })

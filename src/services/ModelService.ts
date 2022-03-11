@@ -14,18 +14,40 @@ import * as IndexTaskService from './IndexTaskService';
 const generateColumns = (meta: VectorModelMeta[]): any => {
   const cols = {
     id: { type: DataTypes.STRING, primaryKey: true },
-    name: { type: DataTypes.STRING },
-    date: { type: DataTypes.STRING },
+    name: { type: DataTypes.TEXT },
     ['vector$x']: { type: DataTypes.DOUBLE },
     ['vector$y']: { type: DataTypes.DOUBLE },
     ['vector$z']: { type: DataTypes.DOUBLE },
     cosineArray: { type: DataTypes.TEXT },
+    chunk: {
+      type: "VARCHAR(255) GENERATED ALWAYS as (CONCAT(FLOOR(vector$x), '$', FLOOR(vector$y), '$', FLOOR(vector$z)))",
+      set() {
+        throw new Error('generatedValue is read-only')
+      }
+    },
   }
 
   meta.forEach(metaItem => {
-    Object.assign(cols, {
-      [`meta$${metaItem.key}`]: DataTypes.STRING
-    })
+    switch (metaItem.type) {
+      case 'date': {
+        Object.assign(cols, {
+          [`meta$${metaItem.key}`]: DataTypes.DATE
+        })
+        break;
+      }
+      case 'string':{
+        Object.assign(cols, {
+          [`meta$${metaItem.key}`]: DataTypes.TEXT
+        })
+        break;
+      };
+      case 'number':{
+        Object.assign(cols, {
+          [`meta$${metaItem.key}`]: DataTypes.INTEGER
+        })
+        break;
+      }
+    }
   })
 
   return cols;
@@ -45,12 +67,16 @@ const createSqlModel = async (model: VectorModel): Promise<ModelStatic<Model<any
   return sqlModel;
 }
 
-export const initModel = async (collectionName: string, cosineArray: string, mappings: Record<string, string>, meta: VectorModelMetaAttributes[]): Promise<IndexTask> => {
+export const initModel = async (collectionName: string, cosineArray: string, mappings: Record<string, string>, meta: VectorModelMetaAttributes[], description: string, dateField: string): Promise<IndexTask> => {
 
+  const collectionCount = 890000
   const name = `${collectionName}_${(Math.random() + 1).toString(36).substring(7)}`
   const vectorModel = await VectorModel.create({
     collectionName: name,
     cosineArray,
+    description,
+    documentCount: collectionCount,
+    dateField,
   })
 
 
@@ -69,11 +95,10 @@ export const initModel = async (collectionName: string, cosineArray: string, map
     })
   }
 
-  const collectionCount = 890000 // await DocumentService.countCollection(vectorModel.collectionName.split('_')[0]);
+  // await DocumentService.countCollection(vectorModel.collectionName.split('_')[0]);
   console.log(`Collection count: ${collectionCount}`)
   const indexTask = await IndexTaskService.createIndexTask({
     VectorModelId: vectorModel.id,
-    estimatedComplete: new Date(),
     recordCount: collectionCount,
     recordsInserted: 0
   })

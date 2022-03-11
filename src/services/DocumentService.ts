@@ -24,7 +24,7 @@ const ensureCollection = (collectionName: string) => {
 }
 
 const generateSelectQuery = (filters: Filter[], tableName: string, limit: number, offset: number) => {
-  let query = `SELECT id, name, date, vector$x, vector$y, vector$z FROM ${tableName} `;
+  let query = `SELECT id, name, vector$x, vector$y, vector$z, chunk FROM ${tableName} `;
   const replacements = [] as any[];
 
   if (filters.length > 0) {
@@ -45,7 +45,7 @@ const generateSelectQuery = (filters: Filter[], tableName: string, limit: number
     });
   }
 
-  query += ` LIMIT ${limit} OFFSET ${offset} `
+  query += `ORDER BY RAND() LIMIT ${limit} OFFSET ${offset} `
 
   // remove multiple spaces: just for the looks 😉
   query = query.replace(/  +/g, ' ');
@@ -56,7 +56,7 @@ const generateSelectQuery = (filters: Filter[], tableName: string, limit: number
   }
 }
 
-export const getDocuments = async (modelId: number, filters: Filter[], limit = 1000, offset = 0): Promise<any> => {
+export const getDocuments = async (modelId: number, filters: Filter[], limit = 1000, offset = 0, chunkData = false): Promise<any> => {
   const model = await ModelServices.getModel(modelId);
 
   const { query, replacements } = generateSelectQuery(filters, model.collectionName, limit, offset);
@@ -67,21 +67,58 @@ export const getDocuments = async (modelId: number, filters: Filter[], limit = 1
   });
 
 
+  if (!chunkData) {
+    return {
+      count: result.length,
+      rows: result.map((e: any) => {
+        return {
+          id: e.id,
+          name: e.name,
+          vector3: {
+            x: e.vector$x,
+            y: e.vector$y,
+            z: e.vector$z,
+          }
+        }
+      })
+    }
+  }
+
+  const obj: Record<string, any[]> = {}
+  result.forEach((document: any) => {
+    if (!obj[document.chunk]) {
+      Object.assign(obj, { [document.chunk]: [document] })
+    } else {
+      obj[document.chunk].push(document);
+    }
+  })
+
+  const data = Object.keys(obj).map(i => {
+    const x = i.split('$')
+    return {
+      count: obj[i].length,
+      vector: {
+        x: parseInt(x[0], 10),
+        y: parseInt(x[1], 10),
+        z: parseInt(x[2], 10)
+      },
+      rows: obj[i].map(e => {
+        return {
+          id: e.id,
+          name: e.name,
+          vector3: {
+            x: e.vector$x,
+            y: e.vector$y,
+            z: e.vector$z,
+          }
+        }
+      })
+    }
+  })
 
   return {
     count: result.length,
-    rows: result.map((e: any) => {
-      return {
-        id: e.id,
-        name: e.name,
-        date: e.date,
-        vector3: {
-          x: e.vector$x,
-          y: e.vector$y,
-          z: e.vector$z,
-        }
-      }
-    })
+    chunks: data
   }
 }
 
@@ -102,48 +139,60 @@ export const countCollection = async (collectionName: string): Promise<number> =
 }
 
 export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelStatic<Model<any, any>>, indexTask: IndexTask) => {
-  const mongoCollection = ensureCollection(vectorModel.collectionName.split('_')[0]);
-  const mappings = await vectorModel.getMappings();
-  const meta = await vectorModel.getMeta();
+  try {
+    const mongoCollection = ensureCollection(vectorModel.collectionName.split('_')[0]);
+    const mappings = await vectorModel.getMappings();
+    const meta = await vectorModel.getMeta();
 
-  const getDescendantProp = (obj: any, desc: string) => {
-    return desc.split('.').reduce((a, b) => {
-      return a[b];
-    }, obj);
-  }
-
-
-  let arr: any[] = [];
-  let x = 0;
-  mongoCollection.find().cursor().eachAsync(async (document: any) => {
-    if (!document) return;
-    const obj = {
-      id: document[mappings.find(e => e.key === 'id').value],
-      name: getDescendantProp(document, mappings.find(e => e.key === 'name').value),
-      date: document[mappings.find(e => e.key === 'date').value],
-      ['vector$x']: document[mappings.find(e => e.key === 'vector3').value][0],
-      ['vector$y']: document[mappings.find(e => e.key === 'vector3').value][1],
-      ['vector$z']: document[mappings.find(e => e.key === 'vector3').value][2],
-      cosineArray: document[vectorModel.cosineArray].join(',')
+    const getDescendantProp = (obj: any, desc: string) => {
+      return desc.split('.').reduce((a, b) => {
+        return a[b];
+      }, obj);
     }
 
-    meta.forEach((metaItem) => {
-      Object.assign(obj, {
-        [`meta$${metaItem.key}`]: document[metaItem.key]
-      })
-    })
 
-    arr.push(obj)
-    if (arr.length === 1000) {
-      await sqlModel.bulkCreate(arr);
-      x += 1000
-      await indexTask.update({ recordsInserted: x });
-      arr = [];
-      if(x === indexTask.recordCount){
-        await db.query(`CREATE INDEX vector_index ON ${vectorModel.collectionName} (vector$x, vector$y, vector$z)`);
+    let arr: any[] = [];
+    let x = 0;
+    mongoCollection.find().cursor().eachAsync(async (document: any) => {
+      if (!document) return;
+      const obj = {
+        id: document[mappings.find(e => e.key === 'id').value],
+        name: getDescendantProp(document, mappings.find(e => e.key === 'name').value),
+        ['vector$x']: document[mappings.find(e => e.key === 'vector3').value][0],
+        ['vector$y']: document[mappings.find(e => e.key === 'vector3').value][1],
+        ['vector$z']: document[mappings.find(e => e.key === 'vector3').value][2],
+        cosineArray: document[vectorModel.cosineArray].join(',')
       }
-    }
-  })
+
+      meta.forEach((metaItem) => {
+        let value = document[metaItem.key];
+        if (metaItem.type === 'date') {
+          value = new Date(document[metaItem.key]).toISOString().substring(0, 10)
+        }
+        Object.assign(obj, {
+          [`meta$${metaItem.key}`]: value
+        })
+      })
+
+      arr.push(obj)
+      if (arr.length === 1000) {
+        try {
+          await sqlModel.bulkCreate(arr);
+          x += 1000
+          await indexTask.update({ recordsInserted: x });
+          arr = [];
+        } catch (error) {
+          console.log(error);
+        }
+
+        if (x === indexTask.recordCount) {
+          await db.query(`CREATE INDEX vector_index ON ${vectorModel.collectionName} (vector$x, vector$y, vector$z)`);
+        }
+      }
+    })
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 export const getCloseDocuments = (document: any, rangeFactor: number) => {
