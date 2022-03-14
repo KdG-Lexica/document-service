@@ -7,7 +7,7 @@ import { Sequelize } from "sequelize";
 const config = {
   host: process.env.production === 'yes' ? 'mysql' : "141.94.222.96",
   user: process.env.production === 'yes' ? process.env.MYSQL_USER : "root",
-  database: process.env.production === 'yes' ? process.env.DATABASE : "lexica",
+  database: process.env.production === 'yes' ? process.env.MYSQL_DATABASE : "lexica",
   password: process.env.production === 'yes' ? process.env.MYSQL_PASSWORD : "watchjs",
 };
 
