@@ -22,8 +22,11 @@ app.get('/api/health', (req: Request, res: Response) => {
 })
 
 import ModelRouter from './routes/ModelRouter';
+import IPTCRouter from './routes/IPTCRouter';
 
 app.use('/models', ModelRouter);
+app.use('/iptc', IPTCRouter);
+
 
 app.use((req: Request, res: Response, next: NextFunction) => next(new HttpException(404, "not-found")));
 app.use((error: HttpException, req: Request, res: Response, next: NextFunction) => {
@@ -33,7 +36,7 @@ app.use((error: HttpException, req: Request, res: Response, next: NextFunction) 
 
 (async () => {
   await connectMongo();
-  await db.sync({force: false});
+  await db.sync({alter: true});
   app.listen(PORT, () => {
     console.log(`API running on port ${PORT}!`);
   });

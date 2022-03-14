@@ -5,7 +5,7 @@ import { db } from '../db';
 
 import * as ModelServices from './ModelService';
 import VectorModel from '../models/VectorModel';
-import IndexTask from '../models/IndexTask';
+import IndexTask, { TASK_STATE } from '../models/IndexTask';
 
 import { Model, ModelStatic, QueryTypes } from 'sequelize';
 
@@ -36,8 +36,15 @@ const generateSelectQuery = (filters: Filter[], tableName: string, limit: number
         query += '('
         const checks: string[] = [];
         filter.rules.forEach(rule => {
-          if (rule.operator === 'CONTAINS') checks.push(` meta$${rule.field} LIKE '%${rule.value}%' `)
-          if (rule.operator === 'EQUALS') { checks.push(` meta$${rule.field} = ? `); replacements.push(rule.value) }
+          if (rule.operator === 'CONTAINS') { checks.push(` meta$${rule.field} LIKE '%${rule.value}%' `) }
+          if (rule.operator === 'DOES_NOT_CONTAIN') { checks.push(` meta$${rule.field} NOT LIKE '%${rule.value}%' `) }
+          if (rule.operator === 'EMPTY') { checks.push(` meta$${rule.field} = ''`) }
+          if (rule.operator === 'NOT_EMPTY') { checks.push(` meta$${rule.field} != ''`) }
+          if (rule.operator === 'EQUALS') { checks.push(` meta$${rule.field} = ? `); replacements.push(rule.value) };
+          if (rule.operator === 'REGEX') { checks.push(` meta$${rule.field} REGEXP ? `); replacements.push(rule.value) }
+          if (rule.operator === 'BEFORE') { checks.push(` meta$${rule.field} > ? `); replacements.push(rule.value) };
+          if (rule.operator === 'AFTER') { checks.push(` meta$${rule.field} < ? `); replacements.push(rule.value) };
+          if (rule.operator === 'FROM') { checks.push(` meta$${rule.field} BETWEEN CAST(? AS DATE) AND CAST(? AS DATE)  `); replacements.push(rule.value.split('$')[0], rule.value.split('$')[1]) };
         })
         query += checks.join(` ${filter.combinator} `);
         query += ')'
@@ -50,6 +57,10 @@ const generateSelectQuery = (filters: Filter[], tableName: string, limit: number
   // remove multiple spaces: just for the looks 😉
   query = query.replace(/  +/g, ' ');
 
+  console.log({
+    query,
+    replacements
+  })
   return {
     query,
     replacements
@@ -63,7 +74,9 @@ export const getDocuments = async (modelId: number, filters: Filter[], limit = 1
 
   const result = await db.query(query, {
     replacements,
-    type: QueryTypes.SELECT
+    type: QueryTypes.SELECT,
+    benchmark: true,
+    logging: console.log
   });
 
 
@@ -180,6 +193,11 @@ export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelSt
           await sqlModel.bulkCreate(arr);
           x += 1000
           await indexTask.update({ recordsInserted: x });
+          if (x === indexTask.recordCount) {
+            await indexTask.update({
+              state: TASK_STATE.FINISHED
+            })
+          }
           arr = [];
         } catch (error) {
           console.log(error);
@@ -191,7 +209,9 @@ export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelSt
       }
     })
   } catch (error) {
-    console.log(error)
+    await indexTask.update({
+      state: TASK_STATE.ERROR
+    })
   }
 }
 

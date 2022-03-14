@@ -20,6 +20,7 @@ const db = new Sequelize(config.database, config.user, config.password, {
     collate: 'utf8mb4_general_ci'
   },
   logging: (msg) => {
+    console.log(msg);
     queryCount++;
   },
 });
@@ -30,11 +31,17 @@ import VectorModelMapping from './models/VectorModelMapping';
 import VectorModelMeta from './models/VectorModelMeta';
 import IndexTask from './models/IndexTask';
 
+import IPTCMeta from './models/IPTCMeta';
+import IPTCSet from './models/IPTCSet'
 
 VectorModel.hasMany(VectorModelMeta, { as: 'meta'});
 VectorModel.hasMany(VectorModelMapping, { as: 'mappings'})
 
 VectorModel.hasOne(IndexTask);
+
+IPTCSet.hasMany(IPTCMeta);
+
+
 // MONGO SETUP
 const MONGODB_URL = process.env.MONGODB_URL;
 const connectMongo = () => { return mongoose.connect(MONGODB_URL, { dbName: "nyt", user: "root", pass: "example" }) }

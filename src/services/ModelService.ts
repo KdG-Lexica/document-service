@@ -1,7 +1,7 @@
 import VectorModel, { VectorModelAttributes } from '../models/VectorModel';
 import VectorModelMapping, { VectorModelMappingAttributes } from '../models/VectorModelMapping';
 import VectorModelMeta, { VectorModelMetaAttributes } from '../models/VectorModelMeta';
-import IndexTask from '../models/IndexTask';
+import IndexTask, { TASK_STATE } from '../models/IndexTask';
 
 import { db } from '../db';
 import { DataTypes, Model, ModelStatic } from 'sequelize';
@@ -100,7 +100,8 @@ export const initModel = async (collectionName: string, cosineArray: string, map
   const indexTask = await IndexTaskService.createIndexTask({
     VectorModelId: vectorModel.id,
     recordCount: collectionCount,
-    recordsInserted: 0
+    recordsInserted: 0,
+    state: TASK_STATE.RUNNING
   })
 
   const sqlModel = await createSqlModel(vectorModel);
