@@ -47,6 +47,15 @@ const MONGODB_URL = process.env.MONGODB_URL || "mongodb://mongodb.verhelst.dev:2
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || 'nyt' 
 const MONGODB_USER = process.env.MONGO_USERNAME || 'root';
 const MONGODB_PASSWORD = process.env.MONGO_PASSWORD || 'example'
+
+console.log(process.env);
+console.log({
+  MONGODB_URL,
+  MONGODB_DB_NAME,
+  MONGODB_USER,
+  MONGODB_PASSWORD
+})
+
 const connectMongo = () => { return mongoose.connect(MONGODB_URL, { dbName: MONGODB_DB_NAME, user: MONGODB_USER , pass: MONGODB_PASSWORD }) }
 mongoose.set('debug', { shell: true })
 export {
