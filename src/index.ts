@@ -24,8 +24,8 @@ app.get('/api/health', (req: Request, res: Response) => {
 import ModelRouter from './routes/ModelRouter';
 import IPTCRouter from './routes/IPTCRouter';
 
-app.use('/models', ModelRouter);
-app.use('/iptc', IPTCRouter);
+app.use('/api/models', ModelRouter);
+app.use('/api/iptc', IPTCRouter);
 
 
 app.use((req: Request, res: Response, next: NextFunction) => next(new HttpException(404, "not-found")));
