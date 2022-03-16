@@ -5,10 +5,10 @@ import { Sequelize } from "sequelize";
 
 // SQL SETUP
 const config = {
-  host: process.env.production === 'yes' ? 'mysql' : "141.94.222.96",
-  user: process.env.production === 'yes' ? process.env.MYSQL_USER : "root",
-  database: process.env.production === 'yes' ? process.env.MYSQL_DATABASE : "lexica",
-  password: process.env.production === 'yes' ? process.env.MYSQL_PASSWORD : "watchjs",
+  host: process.env.DB_HOST,
+  user: process.env.MYSQL_USER,
+  database: process.env.MYSQL_DATABASE,
+  password: process.env.MYSQL_PASSWORD,
 };
 
 let queryCount = 0;
@@ -43,10 +43,10 @@ IPTCSet.hasMany(IPTCMeta);
 
 
 // MONGO SETUP
-const MONGODB_URL = process.env.MONGO_URL || "mongodb://mongodb.verhelst.dev:27017";
-const MONGODB_DB_NAME = process.env.MONGO_DB_NAME || 'nyt' 
-const MONGODB_USER = process.env.MONGO_USERNAME || 'root';
-const MONGODB_PASSWORD = process.env.MONGO_PASSWORD || 'example'
+const MONGODB_URL = process.env.MONGO_URL
+const MONGODB_DB_NAME = process.env.MONGO_DB_NAME
+const MONGODB_USER = process.env.MONGO_USERNAME
+const MONGODB_PASSWORD = process.env.MONGO_PASSWORD
 
 console.log(process.env);
 
