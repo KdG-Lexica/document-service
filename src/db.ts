@@ -20,7 +20,6 @@ const sql = new Sequelize(config.database, config.user, config.password, {
     collate: 'utf8mb4_general_ci'
   },
   logging: (msg) => {
-    console.log(msg);
     queryCount++;
   },
 });

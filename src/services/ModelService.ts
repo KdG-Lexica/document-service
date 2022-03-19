@@ -18,9 +18,9 @@ const generateColumns = (meta: VectorModelMeta[]): any => {
   const cols = {
     id: { type: DataTypes.STRING, primaryKey: true },
     name: { type: DataTypes.TEXT },
-    ['vector$x']: { type: DataTypes.DOUBLE },
-    ['vector$y']: { type: DataTypes.DOUBLE },
-    ['vector$z']: { type: DataTypes.DOUBLE },
+    vector$x: { type: DataTypes.DOUBLE },
+    vector$y: { type: DataTypes.DOUBLE },
+    vector$z: { type: DataTypes.DOUBLE },
     cosineArray: { type: DataTypes.TEXT },
     chunk: {
       type: "VARCHAR(255) GENERATED ALWAYS as (CONCAT(FLOOR(vector$x), '$', FLOOR(vector$y), '$', FLOOR(vector$z)))",
@@ -35,7 +35,7 @@ const generateColumns = (meta: VectorModelMeta[]): any => {
   // For example metadata pub_date becomes column meta$pub_date
   meta.forEach(metaItem => {
 
-    //Checking on type of metadata and setting column type
+    // Checking on type of metadata and setting column type
     switch (metaItem.type) {
       case 'date': {
         Object.assign(cols, {
@@ -62,7 +62,7 @@ const generateColumns = (meta: VectorModelMeta[]): any => {
 }
 
 const createSqlModel = async (model: VectorModel): Promise<ModelStatic<Model<any, any>>> => {
-  
+
   const meta = await model.getMeta();
   const cols = generateColumns(meta);
 
@@ -115,7 +115,7 @@ export const initModel = async (props: CreateModelDto): Promise<IndexTask> => {
     })
 
     const sqlModel = await createSqlModel(vectorModel);
-    DocumentService.syncModelToSql(vectorModel, sqlModel, mongoCollection , indexTask);
+    DocumentService.syncModelToSql(vectorModel, sqlModel, mongoCollection, indexTask);
 
     return indexTask;
 

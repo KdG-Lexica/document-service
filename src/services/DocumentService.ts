@@ -170,12 +170,33 @@ export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelSt
     let documents: any[] = [];
     let recordsInserted = 0;
 
+
+
+    // Creating a projection including default fields, metadata en cosine array
+    // Saves bandwith since we do not fetch data we don't need
+    const projection = {};
+
+    mappings.forEach(e => {
+      Object.assign(projection, {
+        [e.value]: true
+      })
+    });
+
+    meta.forEach(e => {
+      Object.assign(projection, {
+        [e.key]: true
+      })
+    });
+
+    Object.assign(projection, {
+      [vectorModel.cosineArray]: true
+    });
+
     // Cursor over mongodb collection
-    const cursor = mongoCollection.find({});
+    const cursor = mongoCollection.find({}, { projection });
     while (await cursor.hasNext()) {
       // This will fetch one document at a time
       const document = await cursor.next();
-
       // Basic mappings from mongodb to SQL model
       const obj = {
         id: document[mappings.find(e => e.key === 'id').value],
