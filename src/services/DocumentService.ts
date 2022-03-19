@@ -1,27 +1,15 @@
-import mongoose, { Schema } from 'mongoose';
-import { Filter, Rule } from '../dtos/filter';
+import { Filter } from '../dtos/filter';
+import { Model, ModelStatic, QueryTypes } from 'sequelize';
+import { Collection, Document } from 'mongodb';
 
-import { db } from '../db';
+import { sql } from '../db';
 
-import * as ModelServices from './ModelService';
+
 import VectorModel from '../models/VectorModel';
 import IndexTask, { TASK_STATE } from '../models/IndexTask';
 
-import { Model, ModelStatic, QueryTypes } from 'sequelize';
+import * as ModelServices from './ModelService';
 
-const ensureCollection = (collectionName: string) => {
-  let collection: any;
-  try {
-    const schema = new Schema({
-      _id: String
-    }, { strict: false, _id: false })
-    collection = mongoose.model(collectionName, schema);
-  } catch (error) {
-    collection = mongoose.model(collectionName);
-  }
-
-  return collection;
-}
 
 const generateSelectQuery = (filters: Filter[], tableName: string, limit: number, offset: number) => {
   let query = `SELECT id, name, vector$x, vector$y, vector$z, chunk FROM ${tableName} `;
@@ -67,35 +55,31 @@ const generateSelectQuery = (filters: Filter[], tableName: string, limit: number
   }
 }
 
-export const getDocuments = async (modelId: number, filters: Filter[], limit = 1000, offset = 0, chunkData = false): Promise<any> => {
+const getMetaDataFromDocument = (document: any): Record<string, any> => {
+  const metaData: Record<string, any> = {}
+
+  Object.keys(document).filter(e => e.startsWith('meta$')).forEach(meta => {
+    Object.assign(metaData, {
+      [meta.replace('meta$', '')]: document[meta]
+    })
+  })
+
+  return metaData;
+}
+
+export const getDocuments = async (modelId: number, filters: Filter[], limit = 1000, offset = 0): Promise<any> => {
   const model = await ModelServices.getModel(modelId);
 
   const { query, replacements } = generateSelectQuery(filters, model.collectionName, limit, offset);
 
-  const result = await db.query(query, {
+  console.log(query)
+  const result = await sql.query(query, {
     replacements,
     type: QueryTypes.SELECT,
-    benchmark: true,
     logging: console.log
   });
 
-
-  if (!chunkData) {
-    return {
-      count: result.length,
-      rows: result.map((e: any) => {
-        return {
-          id: e.id,
-          name: e.name,
-          vector3: {
-            x: e.vector$x,
-            y: e.vector$y,
-            z: e.vector$z,
-          }
-        }
-      })
-    }
-  }
+  console.log('got 2')
 
   const obj: Record<string, any[]> = {}
   result.forEach((document: any) => {
@@ -137,37 +121,62 @@ export const getDocuments = async (modelId: number, filters: Filter[], limit = 1
 
 export const getDocument = async (modelId: number, documentId: string) => {
 
+  // Get top level model where this document exists
   const model = await ModelServices.getModel(modelId);
-  const mongoCollection = ensureCollection(model.collectionName.split('_')[0]);
-  console.log(mongoCollection);
 
-  const document = await mongoCollection.findOne({ _id: documentId }).exec();
+  // Read the document
+  const documents = await sql.query(`SELECT * FROM  ${model.collectionName} WHERE id = ?`, {
+    replacements: [documentId],
+    type: QueryTypes.SELECT
+  });
 
-  return document;
+  // Check if we actually recieved a document
+  if (documents.length > 0) {
+    const d = documents[0] as any;
+
+    // Basic data mapping
+    const result = {
+      id: d.id,
+      name: d.name,
+      vector3: {
+        x: d.vector$x,
+        y: d.vector$y,
+        z: d.vector$z
+      },
+    }
+
+    // Metadata mapping
+    Object.assign(result, { meta: getMetaDataFromDocument(d) })
+
+    return result;
+  }
+
+  throw new Error('error/document-not-found')
 }
 
-export const countCollection = async (collectionName: string): Promise<number> => {
-  const mongoCollection = ensureCollection(collectionName);
-  return mongoCollection.count({});
-}
-
-export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelStatic<Model<any, any>>, indexTask: IndexTask) => {
+export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelStatic<Model<any, any>>, mongoCollection: Collection<Document>, indexTask: IndexTask) => {
   try {
-    const mongoCollection = ensureCollection(vectorModel.collectionName.split('_')[0]);
     const mappings = await vectorModel.getMappings();
     const meta = await vectorModel.getMeta();
 
+
+    // Get data in mongodb nested objects --> Example headline.main
     const getDescendantProp = (obj: any, desc: string) => {
       return desc.split('.').reduce((a, b) => {
         return a[b];
       }, obj);
     }
 
+    let documents: any[] = [];
+    let recordsInserted = 0;
 
-    let arr: any[] = [];
-    let x = 0;
-    mongoCollection.find().cursor().eachAsync(async (document: any) => {
-      if (!document) return;
+    // Cursor over mongodb collection
+    const cursor = mongoCollection.find({});
+    while (await cursor.hasNext()) {
+      // This will fetch one document at a time
+      const document = await cursor.next();
+
+      // Basic mappings from mongodb to SQL model
       const obj = {
         id: document[mappings.find(e => e.key === 'id').value],
         name: getDescendantProp(document, mappings.find(e => e.key === 'name').value),
@@ -177,6 +186,8 @@ export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelSt
         cosineArray: document[vectorModel.cosineArray].join(',')
       }
 
+      // Set every meta item in SQL model to meta$meta_key
+      // pub_date becomes meta$pub_date in SQL model
       meta.forEach((metaItem) => {
         let value = document[metaItem.key];
         if (metaItem.type === 'date') {
@@ -187,34 +198,51 @@ export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelSt
         })
       })
 
-      arr.push(obj)
-      if (arr.length === 1000) {
+
+      documents.push(obj)
+
+      // We bulk insert documents in groups of 1000 to SQL
+      if (documents.length === 1000) {
         try {
-          await sqlModel.bulkCreate(arr);
-          x += 1000
-          await indexTask.update({ recordsInserted: x });
-          if (x === indexTask.recordCount) {
-            await indexTask.update({
-              state: TASK_STATE.FINISHED
-            })
-          }
-          arr = [];
+          await sqlModel.bulkCreate(documents);
+          recordsInserted += 1000
+          // Update progress so you can follow progress
+          await indexTask.update({ recordsInserted });
+          documents = [];
         } catch (error) {
           console.log(error);
         }
-
-        if (x === indexTask.recordCount) {
-          await db.query(`CREATE INDEX vector_index ON ${vectorModel.collectionName} (vector$x, vector$y, vector$z)`);
-        }
       }
+    }
+
+    // When indexing is finished
+
+    // Create index on vector data for faster querying
+    await sql.query(`CREATE INDEX vector_index ON ${vectorModel.collectionName} (vector$x, vector$y, vector$z)`);
+    // Create indexes on all meta fields that are dates for faster querying
+    for (const dateMeta of meta.filter(e => e.type === 'date')) {
+      await sql.query(`CREATE INDEX date_index_${dateMeta.key} ON ${vectorModel.collectionName} (meta$${dateMeta.key})`)
+    }
+
+    // Select averages of vectors to help set viewer in the middle of data
+    const averages = await sql.query(`SELECT AVG(vector$x) as x, AVG(vector$y) as y, AVG(vector$z) as z  FROM ${vectorModel.collectionName};`, { type: QueryTypes.SELECT })
+    if (averages[0]) {
+      const a = averages[0] as Record<string, number>
+      await vectorModel.update({
+        center$x: a.x,
+        center$y: a.y,
+        center$z: a.z,
+      })
+    }
+
+    // Set state to finshed
+    await indexTask.update({
+      state: TASK_STATE.FINISHED
     })
+
   } catch (error) {
     await indexTask.update({
       state: TASK_STATE.ERROR
     })
   }
-}
-
-export const getCloseDocuments = (document: any, rangeFactor: number) => {
-  console.log('no')
 }

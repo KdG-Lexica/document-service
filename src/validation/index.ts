@@ -2,11 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import { HttpException } from '../exceptions/HttpException';
 
+import ModelCreationValidationRules from './rules/ModelCreationValidationRules';
+import IPTCCreationValidationRules from './rules/IPTCCreationValidationRules';
+import GetDocumentsValidationRules from './rules/GetDocumentsValidationRules';
 
-import CommentValidationRules from './rules/CommentValidationRules';
-import UserValidationRules from './rules/UserValidationRules';
-
-const Validate = (req : Request, res : Response, next : NextFunction) => {
+const Validate = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req)
 
   if (errors.isEmpty()) {
@@ -14,13 +14,21 @@ const Validate = (req : Request, res : Response, next : NextFunction) => {
   }
 
   const extractedErrors = [] as object[]
-  errors.array().map(err => extractedErrors.push({ [err.param]: err.msg }))
 
-  return next(new HttpException(422, extractedErrors.toString()))
+  errors.array().map(err => extractedErrors.push({
+    [err.param]: {
+      message: err.msg,
+      location: err.location,
+      value: err.value
+    }
+  }))
+
+  return next(new HttpException(400, extractedErrors))
 }
 
 export {
   Validate,
-  CommentValidationRules,
-  UserValidationRules
+  ModelCreationValidationRules,
+  IPTCCreationValidationRules,
+  GetDocumentsValidationRules
 }

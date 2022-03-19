@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { sql } from '../db';
 
 import { DataTypes, Model, Association, HasManyAddAssociationsMixin, NonAttribute, HasManyGetAssociationsMixin } from 'sequelize';
 import VectorModelMeta from './VectorModelMeta';
@@ -11,7 +11,9 @@ export interface VectorModelAttributes {
   cosineArray: string,
   description: string,
   documentCount: number,
-  dateField: string,
+  center$x: number,
+  center$y: number,
+  center$z: number,
 }
 
 
@@ -21,7 +23,9 @@ class VectorModel extends Model<VectorModelAttributes> implements VectorModelAtt
   declare cosineArray: string;
   declare description: string;
   declare documentCount: number;
-  declare dateField: string;
+  declare center$x: number;
+  declare center$y: number;
+  declare center$z: number;
 
   public static associations: {
     meta: Association<VectorModel, VectorModelMeta>;
@@ -56,11 +60,20 @@ VectorModel.init({
   documentCount: {
     type: DataTypes.INTEGER,
   },
-  dateField: {
-    type: DataTypes.STRING
+  center$x: {
+    type: DataTypes.DOUBLE,
+    defaultValue: 0,
+  },
+  center$y: {
+    type: DataTypes.DOUBLE,
+    defaultValue: 0,
+  },
+  center$z: {
+    type: DataTypes.DOUBLE,
+    defaultValue: 0,
   }
 }, {
-    sequelize: db
+    sequelize: sql
 })
 
 export default VectorModel;

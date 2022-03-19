@@ -3,12 +3,15 @@ import VectorModelMapping, { VectorModelMappingAttributes } from '../models/Vect
 import VectorModelMeta, { VectorModelMetaAttributes } from '../models/VectorModelMeta';
 import IndexTask, { TASK_STATE } from '../models/IndexTask';
 
-import { db } from '../db';
+import { sql, connectMongo } from '../db';
 import { DataTypes, Model, ModelStatic } from 'sequelize';
 
 import * as DocumentService from './DocumentService';
 import * as IndexTaskService from './IndexTaskService';
 
+import { CreateModelDto } from '../dtos/model';
+
+import { v4 as uuidv4 } from 'uuid';
 
 
 const generateColumns = (meta: VectorModelMeta[]): any => {
@@ -27,7 +30,12 @@ const generateColumns = (meta: VectorModelMeta[]): any => {
     },
   }
 
+
+  // Saving metadata in columms like 'meta$key'
+  // For example metadata pub_date becomes column meta$pub_date
   meta.forEach(metaItem => {
+
+    //Checking on type of metadata and setting column type
     switch (metaItem.type) {
       case 'date': {
         Object.assign(cols, {
@@ -35,13 +43,13 @@ const generateColumns = (meta: VectorModelMeta[]): any => {
         })
         break;
       }
-      case 'string':{
+      case 'string': {
         Object.assign(cols, {
           [`meta$${metaItem.key}`]: DataTypes.TEXT
         })
         break;
       };
-      case 'number':{
+      case 'number': {
         Object.assign(cols, {
           [`meta$${metaItem.key}`]: DataTypes.INTEGER
         })
@@ -54,12 +62,13 @@ const generateColumns = (meta: VectorModelMeta[]): any => {
 }
 
 const createSqlModel = async (model: VectorModel): Promise<ModelStatic<Model<any, any>>> => {
+  
   const meta = await model.getMeta();
   const cols = generateColumns(meta);
 
-  const sqlModel = await db.define(model.collectionName, cols, {
+  const sqlModel = sql.define(model.collectionName, cols, {
     tableName: model.collectionName,
-  })
+  });
 
   await sqlModel.sync();
 
@@ -67,47 +76,53 @@ const createSqlModel = async (model: VectorModel): Promise<ModelStatic<Model<any
   return sqlModel;
 }
 
-export const initModel = async (collectionName: string, cosineArray: string, mappings: Record<string, string>, meta: VectorModelMetaAttributes[], description: string, dateField: string): Promise<IndexTask> => {
+export const initModel = async (props: CreateModelDto): Promise<IndexTask> => {
+  try {
+    const mongoClient = await connectMongo(props.mongoCollection)
+    const mongoCollection = mongoClient.db(props.mongoCollection.db).collection(props.mongoCollection.collection);
 
-  const collectionCount = 890000
-  const name = `${collectionName}_${(Math.random() + 1).toString(36).substring(7)}`
-  const vectorModel = await VectorModel.create({
-    collectionName: name,
-    cosineArray,
-    description,
-    documentCount: collectionCount,
-    dateField,
-  })
+    const collectionCount = await mongoCollection.countDocuments();
 
+    const sqlTableName = uuidv4();
 
-  for (const [key, value] of Object.entries(mappings)) {
-    await VectorModelMapping.create({
-      VectorModelId: vectorModel.id,
-      key,
-      value,
+    const vectorModel = await VectorModel.create({
+      collectionName: sqlTableName,
+      cosineArray: props.cosineArray,
+      description: props.description,
+      documentCount: collectionCount,
     })
+
+    for (const [key, value] of Object.entries(props.mappings)) {
+      await VectorModelMapping.create({
+        VectorModelId: vectorModel.id,
+        key,
+        value,
+      })
+    }
+
+    for (const metaItem of props.meta) {
+      await VectorModelMeta.create({
+        VectorModelId: vectorModel.id,
+        ...metaItem
+      })
+    }
+
+    const indexTask = await IndexTaskService.createIndexTask({
+      VectorModelId: vectorModel.id,
+      recordCount: collectionCount,
+      recordsInserted: 0,
+      state: TASK_STATE.RUNNING
+    })
+
+    const sqlModel = await createSqlModel(vectorModel);
+    DocumentService.syncModelToSql(vectorModel, sqlModel, mongoCollection , indexTask);
+
+    return indexTask;
+
+  } catch (error) {
+    throw error;
   }
 
-  for (const metaItem of meta) {
-    await VectorModelMeta.create({
-      VectorModelId: vectorModel.id,
-      ...metaItem
-    })
-  }
-
-  // await DocumentService.countCollection(vectorModel.collectionName.split('_')[0]);
-  console.log(`Collection count: ${collectionCount}`)
-  const indexTask = await IndexTaskService.createIndexTask({
-    VectorModelId: vectorModel.id,
-    recordCount: collectionCount,
-    recordsInserted: 0,
-    state: TASK_STATE.RUNNING
-  })
-
-  const sqlModel = await createSqlModel(vectorModel);
-  DocumentService.syncModelToSql(vectorModel, sqlModel, indexTask);
-
-  return indexTask;
 }
 
 export const getModel = async (modelId: number): Promise<VectorModel> => {

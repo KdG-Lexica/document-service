@@ -1,6 +1,5 @@
-import { formatISO } from "date-fns";
 import { Request, Response, NextFunction } from "express";
-import { db } from "../db";
+
 import { HttpException } from "../exceptions/HttpException";
 
 import * as CosineService from '../services/CosineService';

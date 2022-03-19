@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { sql } from '../db';
 
 import { DataTypes, Model, Association, HasManyGetAssociationsMixin, HasManyAddAssociationMixin, HasManyCountAssociationsMixin } from 'sequelize';
 
@@ -39,7 +39,7 @@ VectorModelMeta.init({
     type: DataTypes.STRING,
   }
 }, {
-    sequelize: db,
+    sequelize: sql,
     createdAt: false,
     updatedAt: false,
 })

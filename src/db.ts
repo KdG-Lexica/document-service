@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import { MongoClient } from 'mongodb'
 import { Sequelize } from "sequelize";
 
 
@@ -12,7 +12,7 @@ const config = {
 };
 
 let queryCount = 0;
-const db = new Sequelize(config.database, config.user, config.password, {
+const sql = new Sequelize(config.database, config.user, config.password, {
   host: config.host,
   dialect: 'mysql',
   define: {
@@ -33,26 +33,28 @@ import IndexTask from './models/IndexTask';
 
 import IPTCMeta from './models/IPTCMeta';
 import IPTCSet from './models/IPTCSet'
+import { MongoCollection } from './dtos/model';
 
-VectorModel.hasMany(VectorModelMeta, { as: 'meta'});
-VectorModel.hasMany(VectorModelMapping, { as: 'mappings'})
-
+VectorModel.hasMany(VectorModelMeta, { as: 'meta' });
+VectorModel.hasMany(VectorModelMapping, { as: 'mappings' })
 VectorModel.hasOne(IndexTask);
-
 IPTCSet.hasMany(IPTCMeta);
 
 
-// MONGO SETUP
-const MONGODB_URL = process.env.MONGO_URL
-const MONGODB_DB_NAME = process.env.MONGO_DB_NAME
-const MONGODB_USER = process.env.MONGO_USERNAME
-const MONGODB_PASSWORD = process.env.MONGO_PASSWORD
+let mongoClient: null | MongoClient = null;
 
-console.log(process.env);
 
-const connectMongo = () => { return mongoose.connect(MONGODB_URL, { dbName: MONGODB_DB_NAME, user: MONGODB_USER , pass: MONGODB_PASSWORD }) }
-mongoose.set('debug', { shell: true })
+const connectMongo = async (mongo: MongoCollection): Promise<MongoClient> => {
+  if(!mongoClient){
+    mongoClient = new MongoClient(`mongodb://${mongo.host}:${mongo.port}`, { auth: { username: mongo.username, password: mongo.password } });
+    return mongoClient.connect();
+  }
+
+  return mongoClient;
+};
+
+
 export {
-  connectMongo,
-  db,
+  sql,
+  connectMongo
 };

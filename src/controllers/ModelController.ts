@@ -5,11 +5,13 @@ import { HttpException } from "../exceptions/HttpException";
 import * as ModelService from '../services/ModelService';
 import * as IndexTaskService from '../services/IndexTaskService';
 
+import { CreateModelDto } from "../dtos/model";
+
 export const createModel = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { collectionName, cosineArray, meta, mappings, description, dateField } = req.body;
+    const dto = req.body as CreateModelDto;
 
-    const indexTask = await ModelService.initModel(collectionName, cosineArray, mappings, meta, description, dateField);
+    const indexTask = await ModelService.initModel(dto);
 
     return res.json(indexTask);
   } catch (error) {

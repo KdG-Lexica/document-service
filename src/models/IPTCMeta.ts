@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { sql } from '../db';
 
 import { DataTypes, Model, Association, HasManyGetAssociationsMixin, HasManyAddAssociationMixin, HasManyCountAssociationsMixin } from 'sequelize';
 
@@ -48,7 +48,7 @@ IPTCMeta.init({
     type: DataTypes.INTEGER
   }
 }, {
-  sequelize: db,
+  sequelize: sql,
   getterMethods: {
     vector3(){
       return {

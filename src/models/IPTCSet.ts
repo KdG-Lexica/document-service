@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { sql } from '../db';
 
 import { DataTypes, Model, Association, HasManyGetAssociationsMixin, HasManyAddAssociationMixin, HasManyCountAssociationsMixin, HasManyAddAssociationsMixin, NonAttribute } from 'sequelize';
 import IPTCMeta from './IPTCMeta';
@@ -32,7 +32,7 @@ IPTCSet.init({
     type: DataTypes.STRING,
   }
 }, {
-  sequelize: db,
+  sequelize: sql,
 })
 
 export default IPTCSet;

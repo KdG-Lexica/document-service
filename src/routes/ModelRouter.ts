@@ -1,11 +1,14 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import * as ModelController from '../controllers/ModelController';
+
+
+import { ModelCreationValidationRules, Validate } from '../validation';
 
 const ModelRouter: Router = Router({ mergeParams: true });
 
 import DocumentRouter from './DocumentRouter'
 
-ModelRouter.post('/', ModelController.createModel);
+ModelRouter.post('/', ModelCreationValidationRules(), Validate, ModelController.createModel);
 ModelRouter.get('/', ModelController.getModels)
 ModelRouter.get('/tasks', ModelController.getIndexTasks);
 ModelRouter.get('/task/:taskId', ModelController.getIndexTask);

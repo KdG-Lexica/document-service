@@ -3,7 +3,6 @@ import { HttpException } from "../exceptions/HttpException";
 
 import * as IPTCServices from '../services/IPTCService';
 
-
 export const List = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const sets = await IPTCServices.ListIPTCSets();

@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { sql } from '../db';
 
 import { DataTypes, Model, Association, HasManyGetAssociationsMixin, HasManyAddAssociationMixin, HasManyCountAssociationsMixin } from 'sequelize';
 
@@ -47,7 +47,7 @@ IndexTask.init({
     defaultValue: TASK_STATE.RUNNING
   },
 }, {
-  sequelize: db,
+  sequelize: sql,
 })
 
 export default IndexTask;

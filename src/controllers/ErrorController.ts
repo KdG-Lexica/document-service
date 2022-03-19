@@ -11,8 +11,6 @@ export const HandleError = (error: HttpException, req: Request, res: Response, n
       method: req.method,
       host: req.hostname,
       path: req.path,
-      cookies: req.cookies,
-      body: req.body
     },
 
     timestamp: formatISO(Date.now())

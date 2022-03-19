@@ -1,7 +1,7 @@
 import * as DocumentService from './DocumentService';
 import * as ModelService from './ModelService';
 
-import { db } from '../db';
+import { sql } from '../db';
 import Vector3Type from '../dtos/vector3';
 import { QueryTypes } from 'sequelize';
 
@@ -37,7 +37,7 @@ export const GetCosineCloseDocuments = async (modelId: number, documentId: strin
   const model = await ModelService.getModel(modelId);
 
   // document to compare
-  const document: any = (await db.query(`SELECT * FROM ${model.collectionName} WHERE id = ?`, { replacements: [documentId], type: QueryTypes.SELECT }))[0]
+  const document: any = (await sql.query(`SELECT * FROM ${model.collectionName} WHERE id = ?`, { replacements: [documentId], type: QueryTypes.SELECT }))[0]
 
   const query = generateQuery(model.collectionName, rangeFactor, {
     x: document.vector$x,
@@ -46,7 +46,7 @@ export const GetCosineCloseDocuments = async (modelId: number, documentId: strin
   })
 
   // documents that are close based on 3d vector
-  const documents = await db.query(query, { type: QueryTypes.SELECT });
+  const documents = await sql.query(query, { type: QueryTypes.SELECT });
 
   const ca = document.cosineArray.split(',').map(Number)
   for (const doc of documents) {
