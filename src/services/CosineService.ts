@@ -46,7 +46,7 @@ export const GetCosineCloseDocuments = async (modelId: number, documentId: strin
   })
 
   // documents that are close based on 3d vector
-  const documents = await sql.query(query, { type: QueryTypes.SELECT });
+  const documents = (await sql.query(query, { type: QueryTypes.SELECT })) as any[];
 
   const ca = document.cosineArray.split(',').map(Number)
   for (const doc of documents) {
@@ -55,9 +55,20 @@ export const GetCosineCloseDocuments = async (modelId: number, documentId: strin
     const cosine = doc.cosineArray.split(',').map(Number)
     // @ts-ignore
     delete doc.cosineArray
+
+    const d = {
+      id: doc.id,
+      name: doc.name,
+      vector3: {
+        x: doc.vector$x,
+        y: doc.vector$y,
+        z: doc.vector$z
+      }
+    }
+    
     data.push({
       cosine: cosinesim(ca, cosine),
-      doc,
+      doc: d,
     })
   }
 

@@ -9,7 +9,7 @@ import { DataTypes, Model, ModelStatic } from 'sequelize';
 import * as DocumentService from './DocumentService';
 import * as IndexTaskService from './IndexTaskService';
 
-import { CreateModelDto } from '../dtos/model';
+import { CreateModelDto, ModelDto } from '../dtos/model';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -125,8 +125,8 @@ export const initModel = async (props: CreateModelDto): Promise<IndexTask> => {
 
 }
 
-export const getModel = async (modelId: number): Promise<VectorModel> => {
-  return VectorModel.findByPk(modelId, {
+export const getModel = async (modelId: number): Promise<ModelDto> => {
+  const model = await VectorModel.findByPk(modelId, {
     include: [
       {
         model: VectorModelMapping,
@@ -140,6 +140,21 @@ export const getModel = async (modelId: number): Promise<VectorModel> => {
       }
     ]
   })
+
+  return {
+    center: {
+      x: model.center$x,
+      y: model.center$y,
+      z: model.center$z
+    },
+    collectionName: model.collectionName,
+    cosineArray: model.cosineArray,
+    description: model.description,
+    documentCount: model.documentCount,
+    mappings: model.mappings,
+    meta: model.meta,
+    id: model.id,
+  }
 }
 
 export const getModels = () => {
@@ -168,7 +183,7 @@ export const updateModel = (model: Partial<VectorModelAttributes>) => {
 export const deleteModel = async (modelId: number) => {
   const model = await VectorModel.findByPk(modelId);
 
-  if(!model) throw 'error/model-not-found';
+  if (!model) throw 'error/model-not-found';
 
   await sql.query(`DROP TABLE ${model.collectionName};`)
   await model.destroy();

@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { json, urlencoded } from 'body-parser';
 import * as cors from 'cors';
+import helmet from 'helmet';
 import { HandleError } from './controllers/ErrorController';
 import { HttpException } from './exceptions/HttpException';
 import 'dotenv/config'
@@ -8,6 +9,7 @@ import 'dotenv/config'
 import { sql } from './db';
 
 const app = express();
+app.use(helmet());
 const PORT = process.env.PORT as unknown as number || 3000;
 // Middlewares
 app.use(json());
