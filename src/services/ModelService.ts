@@ -165,10 +165,11 @@ export const updateModel = (model: Partial<VectorModelAttributes>) => {
   })
 }
 
-export const deleteModel = (modelId: string) => {
-  return VectorModel.destroy({
-    where: {
-      id: modelId
-    }
-  });
+export const deleteModel = async (modelId: number) => {
+  const model = await VectorModel.findByPk(modelId);
+
+  if(!model) throw 'error/model-not-found';
+
+  await sql.query(`DROP TABLE ${model.collectionName};`)
+  await model.destroy();
 }

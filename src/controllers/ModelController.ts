@@ -59,7 +59,7 @@ export const updateModel = async (req: Request, res: Response, next: NextFunctio
 export const deleteModel = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { model } = req.params;
-    await ModelService.deleteModel(model)
+    await ModelService.deleteModel(+model)
     return res.end();
   } catch (error) {
     return next(new HttpException(500, error))
@@ -76,10 +76,20 @@ export const getIndexTask = async (req: Request, res: Response, next: NextFuncti
   }
 }
 
-export const getIndexTasks =  async (req: Request, res: Response, next: NextFunction) => {
+export const getIndexTasks = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tasks = await IndexTaskService.getIndexTasks();
     return res.json(tasks);
+  } catch (error) {
+    return next(new HttpException(500, error))
+  }
+}
+
+export const canceIndexTask = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { taskId } = req.params;
+    await IndexTaskService.cancelIndexTask(+taskId);
+    return res.end();
   } catch (error) {
     return next(new HttpException(500, error))
   }

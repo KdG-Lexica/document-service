@@ -229,6 +229,12 @@ export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelSt
           recordsInserted += 1000
           // Update progress so you can follow progress
           await indexTask.update({ recordsInserted });
+
+          // Cancel task
+          const _task = await IndexTask.findByPk(indexTask.id);
+          if(_task.state === TASK_STATE.CANCELED){
+            return;
+          }
           documents = [];
         } catch (error) {
           console.log(error);

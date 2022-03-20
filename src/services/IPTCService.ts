@@ -67,3 +67,4 @@ export const CreateIPTCSet = async (name: string, mongo: MongoCollection): Promi
 
   return iptcSet;
 }
+

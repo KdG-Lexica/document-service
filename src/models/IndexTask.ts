@@ -6,7 +6,8 @@ import { DataTypes, Model, Association, HasManyGetAssociationsMixin, HasManyAddA
 export enum TASK_STATE {
   RUNNING = "RUNNING",
   ERROR = "ERROR",
-  FINISHED = "FINISHED"
+  FINISHED = "FINISHED",
+  CANCELED = "CANCELED"
 }
 
 export interface IndexTaskAttributes {
