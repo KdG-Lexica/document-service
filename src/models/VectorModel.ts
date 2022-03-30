@@ -8,9 +8,11 @@ import VectorModelMapping from './VectorModelMapping';
 export interface VectorModelAttributes {
   id: number,
   collectionName: string,
+  title?: string;
   cosineArray: string,
   description: string,
   documentCount: number,
+  hash: string,
   center$x: number,
   center$y: number,
   center$z: number,
@@ -20,9 +22,11 @@ export interface VectorModelAttributes {
 class VectorModel extends Model<VectorModelAttributes> implements VectorModelAttributes {
   public id: number;
   public collectionName: string;
+  declare title: string;
   declare cosineArray: string;
   declare description: string;
   declare documentCount: number;
+  declare hash: string;
   declare center$x: number;
   declare center$y: number;
   declare center$z: number;
@@ -51,6 +55,9 @@ VectorModel.init({
   collectionName: {
     type: DataTypes.STRING,
   },
+  title: {
+    type: DataTypes.STRING
+  },
   cosineArray: {
     type: DataTypes.STRING
   },
@@ -59,6 +66,9 @@ VectorModel.init({
   },
   documentCount: {
     type: DataTypes.INTEGER,
+  },
+  hash: {
+    type: DataTypes.STRING,
   },
   center$x: {
     type: DataTypes.DOUBLE,

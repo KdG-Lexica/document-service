@@ -1,4 +1,3 @@
-import * as DocumentService from './DocumentService';
 import * as ModelService from './ModelService';
 
 import { sql } from '../db';
@@ -6,6 +5,7 @@ import Vector3Type from '../dtos/vector3';
 import { QueryTypes } from 'sequelize';
 
 let x = 0;
+// Cosine simmilarity function
 const cosinesim = (A: number[], B: number[]) => {
   let dotproduct = 0;
   let mA = 0;
@@ -65,7 +65,7 @@ export const GetCosineCloseDocuments = async (modelId: number, documentId: strin
         z: doc.vector$z
       }
     }
-    
+
     data.push({
       cosine: cosinesim(ca, cosine),
       doc: d,

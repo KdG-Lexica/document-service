@@ -4,6 +4,7 @@ import { HttpException } from "../exceptions/HttpException";
 
 import * as ModelService from '../services/ModelService';
 import * as IndexTaskService from '../services/IndexTaskService';
+import * as PermissionServices from '../services/PermissionServices';
 
 import { CreateModelDto } from "../dtos/model";
 
@@ -34,7 +35,7 @@ export const getModel = async (req: Request, res: Response, next: NextFunction) 
 
 export const getModels = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await ModelService.getModels();
+    const result = await ModelService.getModels(req.cookies.session);
 
     return res.json(result);
   } catch (error) {
@@ -91,6 +92,23 @@ export const canceIndexTask = async (req: Request, res: Response, next: NextFunc
     await IndexTaskService.cancelIndexTask(+taskId);
     return res.end();
   } catch (error) {
+    return next(new HttpException(500, error))
+  }
+}
+
+export const unlockModel = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { password } = req.body;
+    const modelId = req.params;
+
+    const success = await PermissionServices.checkAuthentication(+modelId, password);
+    if(!success){
+      return next(new HttpException(403, 'error/unauthorized'))
+    }
+    await PermissionServices.createPermissionForSession(+modelId, req.cookies.session);
+
+    return res.end();
+  } catch(error) {
     return next(new HttpException(500, error))
   }
 }

@@ -3,6 +3,7 @@ import { Sequelize } from "sequelize";
 
 
 
+// All database credentials should be provided as enviroment variables
 // SQL SETUP
 const config = {
   host: process.env.DB_HOST,
@@ -33,10 +34,13 @@ import IndexTask from './models/IndexTask';
 import IPTCMeta from './models/IPTCMeta';
 import IPTCSet from './models/IPTCSet'
 import { MongoCollection } from './dtos/model';
+import ModelSessionPermisson from './models/ModelSessionPermission';
 
 VectorModel.hasMany(VectorModelMeta, { as: 'meta' });
 VectorModel.hasMany(VectorModelMapping, { as: 'mappings' })
 VectorModel.hasOne(IndexTask);
+VectorModel.hasMany(ModelSessionPermisson);
+
 IPTCSet.hasMany(IPTCMeta);
 
 
@@ -45,7 +49,11 @@ let mongoClient: null | MongoClient = null;
 
 const connectMongo = async (mongo: MongoCollection): Promise<MongoClient> => {
   if(!mongoClient){
-    mongoClient = new MongoClient(`mongodb://${mongo.host}:${mongo.port}`, { auth: { username: mongo.username, password: mongo.password } });
+    if(mongo.srv){
+      mongoClient = new MongoClient(`mongodb+srv://${mongo.host}`, { auth: { username: mongo.username, password: mongo.password } });
+    } else {
+      mongoClient = new MongoClient(`mongodb://${mongo.host}:${mongo.port}`, { auth: { username: mongo.username, password: mongo.password } });
+    }
     return mongoClient.connect();
   }
 

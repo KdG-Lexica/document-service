@@ -15,6 +15,7 @@ const generateSelectQuery = (filters: Filter[], tableName: string, limit: number
   let query = `SELECT id, name, vector$x, vector$y, vector$z, chunk FROM ${tableName} `;
   const replacements = [] as any[];
 
+  // This is the filter
   if (filters.length > 0) {
     query += 'WHERE'
     filters.forEach(filter => {
@@ -40,6 +41,7 @@ const generateSelectQuery = (filters: Filter[], tableName: string, limit: number
     });
   }
 
+  // Basic fetch options
   query += `ORDER BY RAND() LIMIT ${limit} OFFSET ${offset} `
 
   // remove multiple spaces: just for the looks 😉
@@ -55,6 +57,7 @@ const generateSelectQuery = (filters: Filter[], tableName: string, limit: number
   }
 }
 
+// converts an object from database to key / value with all metadata
 const getMetaDataFromDocument = (document: any): Record<string, any> => {
   const metaData: Record<string, any> = {}
 
@@ -67,7 +70,10 @@ const getMetaDataFromDocument = (document: any): Record<string, any> => {
   return metaData;
 }
 
+// list documents / used in querying collection.
 export const getDocuments = async (modelId: number, filters: Filter[], limit = 1000, offset = 0): Promise<any> => {
+
+  // fetch model to find table name
   const model = await ModelServices.getModel(modelId);
 
   const { query, replacements } = generateSelectQuery(filters, model.collectionName, limit, offset);
@@ -78,8 +84,6 @@ export const getDocuments = async (modelId: number, filters: Filter[], limit = 1
     type: QueryTypes.SELECT,
     logging: console.log
   });
-
-  console.log('got 2')
 
   const obj: Record<string, any[]> = {}
   result.forEach((document: any) => {

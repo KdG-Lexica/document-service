@@ -14,7 +14,7 @@ export const getIndexTasks = () => {
 
 export const cancelIndexTask = async (taskId: number) => {
   const task = await IndexTask.findByPk(taskId);
-  if (!task) throw 'error/index-task-not-found'
+  if (!task) throw new Error('error/index-task-not-found')
 
   await task.update({ state: TASK_STATE.CANCELED })
 }

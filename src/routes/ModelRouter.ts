@@ -16,6 +16,7 @@ ModelRouter.get('/task/:taskId', ModelController.getIndexTask);
 ModelRouter.post('/task/:taskId/cancel', ModelController.canceIndexTask);
 ModelRouter.patch('/:modelId', ModelController.updateModel);
 ModelRouter.delete('/:modelId', ModelController.deleteModel);
+ModelRouter.post('/:modelId/unlock', ModelController.unlockModel);
 
 ModelRouter.use('/:model/documents', DocumentRouter);
 ModelRouter.get('/:model', ModelController.getModel)

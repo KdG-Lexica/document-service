@@ -15,6 +15,7 @@ export interface MongoCollection {
   port: string,
   username: string,
   password: string,
+  srv: boolean,
 }
 
 export interface CreateModelDto {
@@ -23,7 +24,8 @@ export interface CreateModelDto {
   title: string,
   description: string;
   cosineArray: string,
-  mongoCollection: MongoCollection
+  mongoCollection: MongoCollection,
+  password: string,
 }
 
 
@@ -35,5 +37,8 @@ export interface ModelDto {
   documentCount: number,
   center: Vector3Type,
   meta: VectorModelMeta[],
-  mappings: VectorModelMapping[]
+  mappings: VectorModelMapping[],
+  requiresPassword: boolean,
+  unlocked: boolean,
+  title: string
 }

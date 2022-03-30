@@ -1,3 +1,6 @@
+// This validates requests body to prevent malformed requests
+// Sends back HTTP 400 with more details in response body on malformed request.
+
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import { HttpException } from '../exceptions/HttpException';
@@ -5,6 +8,7 @@ import { HttpException } from '../exceptions/HttpException';
 import ModelCreationValidationRules from './rules/ModelCreationValidationRules';
 import IPTCCreationValidationRules from './rules/IPTCCreationValidationRules';
 import GetDocumentsValidationRules from './rules/GetDocumentsValidationRules';
+
 
 const Validate = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req)

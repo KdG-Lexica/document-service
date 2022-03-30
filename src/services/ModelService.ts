@@ -8,10 +8,12 @@ import { DataTypes, Model, ModelStatic } from 'sequelize';
 
 import * as DocumentService from './DocumentService';
 import * as IndexTaskService from './IndexTaskService';
+import * as PermissionService from './PermissionServices';
 
 import { CreateModelDto, ModelDto } from '../dtos/model';
 
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcrypt';
 
 
 const generateColumns = (meta: VectorModelMeta[]): any => {
@@ -90,6 +92,8 @@ export const initModel = async (props: CreateModelDto): Promise<IndexTask> => {
       cosineArray: props.cosineArray,
       description: props.description,
       documentCount: collectionCount,
+      title: props.title,
+      hash: props.password.length === 0 ? null : await bcrypt.hash(props.password, 10)
     })
 
     for (const [key, value] of Object.entries(props.mappings)) {
@@ -154,11 +158,14 @@ export const getModel = async (modelId: number): Promise<ModelDto> => {
     mappings: model.mappings,
     meta: model.meta,
     id: model.id,
+    title: model.title,
+    requiresPassword: model.hash !== null,
+    unlocked: true,
   }
 }
 
-export const getModels = () => {
-  return VectorModel.findAll({
+export const getModels = async (sessionKey: string): Promise<ModelDto[]> => {
+  const models = await VectorModel.findAll({
     include: [{
       model: VectorModelMapping,
       attributes: { include: ['key', 'value'] },
@@ -169,6 +176,28 @@ export const getModels = () => {
       attributes: { include: ['key', 'type', 'name'] },
       as: 'meta'
     }]
+  })
+
+  const permissions = await PermissionService.getAllowedModelsForSession(sessionKey);
+
+  return models.map(model => {
+    return {
+      center: {
+        x: model.center$x,
+        y: model.center$y,
+        z: model.center$z
+      },
+      collectionName: model.collectionName,
+      cosineArray: model.cosineArray,
+      description: model.description,
+      documentCount: model.documentCount,
+      mappings: model.mappings,
+      meta: model.meta,
+      id: model.id,
+      title: model.title,
+      requiresPassword: model.hash !== null,
+      unlocked: model.hash === null ? true : (permissions.find(e => e.VectorModelId === model.id) ? true : false),
+    }
   })
 }
 
@@ -183,7 +212,7 @@ export const updateModel = (model: Partial<VectorModelAttributes>) => {
 export const deleteModel = async (modelId: number) => {
   const model = await VectorModel.findByPk(modelId);
 
-  if (!model) throw 'error/model-not-found';
+  if (!model) throw new Error('error/model-not-found');
 
   await sql.query(`DROP TABLE ${model.collectionName};`)
   await model.destroy();
