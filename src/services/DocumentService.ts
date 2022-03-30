@@ -12,7 +12,7 @@ import * as ModelServices from './ModelService';
 
 
 const generateSelectQuery = (filters: Filter[], tableName: string, limit: number, offset: number) => {
-  let query = `SELECT id, name, vector$x, vector$y, vector$z, chunk FROM ${tableName} `;
+  let query = "SELECT id, name, vector$x, vector$y, vector$z, chunk FROM   `" + tableName + "` ";
   const replacements = [] as any[];
 
   // This is the filter
@@ -31,8 +31,8 @@ const generateSelectQuery = (filters: Filter[], tableName: string, limit: number
           if (rule.operator === 'NOT_EMPTY') { checks.push(` meta$${rule.field} != ''`) }
           if (rule.operator === 'EQUALS') { checks.push(` meta$${rule.field} = ? `); replacements.push(rule.value) };
           if (rule.operator === 'REGEX') { checks.push(` meta$${rule.field} REGEXP ? `); replacements.push(rule.value) }
-          if (rule.operator === 'BEFORE') { checks.push(` meta$${rule.field} > ? `); replacements.push(rule.value) };
-          if (rule.operator === 'AFTER') { checks.push(` meta$${rule.field} < ? `); replacements.push(rule.value) };
+          if (rule.operator === 'BEFORE') { checks.push(` meta$${rule.field} > CAST(? AS DATE) `); replacements.push(rule.value) };
+          if (rule.operator === 'AFTER') { checks.push(` meta$${rule.field} < CAST(? AS DATE) `); replacements.push(rule.value) };
           if (rule.operator === 'FROM') { checks.push(` meta$${rule.field} BETWEEN CAST(? AS DATE) AND CAST(? AS DATE)  `); replacements.push(rule.value.split('$')[0], rule.value.split('$')[1]) };
         })
         query += checks.join(` ${filter.combinator} `);
@@ -236,7 +236,7 @@ export const syncModelToSql = async (vectorModel: VectorModel, sqlModel: ModelSt
 
           // Cancel task
           const _task = await IndexTask.findByPk(indexTask.id);
-          if(_task.state === TASK_STATE.CANCELED){
+          if (_task.state === TASK_STATE.CANCELED) {
             return;
           }
           documents = [];

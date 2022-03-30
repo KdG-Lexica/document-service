@@ -15,6 +15,7 @@ export const getAllowedModelsForSession = (session: string) => {
 export const checkAuthentication = async (modelId: number, password: string) => {
   const model = await VectorModel.findByPk(modelId);
 
+
   if(!model) throw new Error('error/model-not-found')
   if(!model.hash) return true;
 

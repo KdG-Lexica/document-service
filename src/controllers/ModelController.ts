@@ -99,16 +99,16 @@ export const canceIndexTask = async (req: Request, res: Response, next: NextFunc
 export const unlockModel = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { password } = req.body;
-    const modelId = req.params;
+    const { modelId } = req.params;
 
     const success = await PermissionServices.checkAuthentication(+modelId, password);
-    if(!success){
+    if (!success) {
       return next(new HttpException(403, 'error/unauthorized'))
     }
     await PermissionServices.createPermissionForSession(+modelId, req.cookies.session);
 
     return res.end();
-  } catch(error) {
+  } catch (error) {
     return next(new HttpException(500, error))
   }
 }
