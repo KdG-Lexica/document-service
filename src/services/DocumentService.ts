@@ -129,7 +129,7 @@ export const getDocument = async (modelId: number, documentId: string) => {
   const model = await ModelServices.getModel(modelId);
 
   // Read the document
-  const documents = await sql.query(`SELECT * FROM  ${model.collectionName} WHERE id = ?`, {
+  const documents = await sql.query("SELECT * FROM  `" + model.collectionName + "` WHERE id = ?", {
     replacements: [documentId],
     type: QueryTypes.SELECT
   });

@@ -144,7 +144,8 @@ export const getModel = async (modelId: number): Promise<ModelDto> => {
       }
     ]
   })
-
+  
+  // Basic mapping
   return {
     center: {
       x: model.center$x,
@@ -178,6 +179,28 @@ export const getModels = async (sessionKey: string): Promise<ModelDto[]> => {
     }]
   })
 
+  if(sessionKey.length === 0){
+    return models.map(model => {
+      return {
+        center: {
+          x: model.center$x,
+          y: model.center$y,
+          z: model.center$z
+        },
+        collectionName: model.collectionName,
+        cosineArray: model.cosineArray,
+        description: model.description,
+        documentCount: model.documentCount,
+        mappings: model.mappings,
+        meta: model.meta,
+        id: model.id,
+        title: model.title,
+        requiresPassword: model.hash !== null,
+        unlocked: true
+      }
+    })
+  }
+  
   const permissions = await PermissionService.getAllowedModelsForSession(sessionKey);
 
   return models.map(model => {

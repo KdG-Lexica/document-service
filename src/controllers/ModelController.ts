@@ -35,9 +35,9 @@ export const getModel = async (req: Request, res: Response, next: NextFunction) 
 
 export const getModels = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await ModelService.getModels(req.cookies.session);
-
+    const result = await ModelService.getModels(res.locals.skipAuth ? '' : req.cookies.session);
     return res.json(result);
+
   } catch (error) {
     return next(new HttpException(500, error))
   }
